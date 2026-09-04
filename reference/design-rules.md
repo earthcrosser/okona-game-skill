@@ -46,4 +46,4 @@ Okona games are played on a screen nobody touches — a TV, a projector, a bar's
 - [ ] Results screen with "P1: press A to play again".
 - [ ] Nothing depends on keyboard, mouse or touch on the game.
 - [ ] Type is legible on a TV from a couch; nothing essential in the top-left corner.
-- [ ] `npx okona check <dir>` passes; the sandbox run with real phones felt right.
+- [ ] `npx okona-cli check <dir>` passes; the sandbox run with real phones felt right.

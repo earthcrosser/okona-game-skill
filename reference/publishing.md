@@ -1,15 +1,15 @@
 # Publishing to Okona — CLI and API
 
-## The CLI (`okona`, npm)
+## The CLI (`okona`, npm package `okona-cli`)
 
 ```
-npx okona login                       # device code: prints a URL + 8-char code; a HUMAN approves it in the portal
-npx okona login --key ok_live_…       # or paste a publish key from Account → API Keys
-npx okona whoami · npx okona games
-npx okona create --title "Bumper Party" --description "Six cars, one arena." --runtime html5 [--genre party]
-npx okona check <dir>                 # build shape, size caps, SDK tag, dialogs
-npx okona push <dir> --game <id> [--icon icon.png] [--sandbox] [--publish]
-npx okona publish <id> · npx okona unpublish <id> · npx okona sandbox <id> · npx okona link <id>
+npx okona-cli login                       # device code: prints a URL + 8-char code; a HUMAN approves it in the portal
+npx okona-cli login --key ok_live_…       # or paste a publish key from Account → API Keys
+npx okona-cli whoami · npx okona-cli games
+npx okona-cli create --title "Bumper Party" --description "Six cars, one arena." --runtime html5 [--genre party]
+npx okona-cli check <dir>                 # build shape, size caps, SDK tag, dialogs
+npx okona-cli push <dir> --game <id> [--icon icon.png] [--sandbox] [--publish]
+npx okona-cli publish <id> · npx okona-cli unpublish <id> · npx okona-cli sandbox <id> · npx okona-cli link <id>
 ```
 
 - Add `--json` to any command for machine-readable output (parse this rather than the human text).
@@ -40,7 +40,7 @@ Errors: `{ "error": { "code", "message" } }` with the matching HTTP status (400 
 
 ## Getting a key for an agent
 
-1. The person runs `npx okona login` where the agent runs and approves the code at the printed URL — needs a browser signed in as the organization owner. Tell them this is coming and wait.
-2. Or the person creates a **publish key** under *Account → API Keys* in the portal and gives it to the agent as `OKONA_API_KEY` (or `npx okona login --key …`).
+1. The person runs `npx okona-cli login` where the agent runs and approves the code at the printed URL — needs a browser signed in as the organization owner. Tell them this is coming and wait.
+2. Or the person creates a **publish key** under *Account → API Keys* in the portal and gives it to the agent as `OKONA_API_KEY` (or `npx okona-cli login --key …`).
 
 Never paste a key into the game, a commit, or the chat. Keys can be revoked in the portal at any time.

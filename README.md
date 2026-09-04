@@ -18,13 +18,13 @@ Then ask: *"Make a four-player game we can play on the TV with our phones, and p
 
 ## What the skill makes the agent do
 
-Start from `npm create okona-game`, design for a TV across the room and a phone pad in the hand, test locally (the SDK falls back to the keyboard), run `npx okona check`, push to your private sandbox with `npx okona push … --sandbox`, and publish only when you say so. Logging in (`npx okona login`) needs a person to approve a code in the Okona portal; the skill knows to stop and ask.
+Start from `npm create okona-game`, design for a TV across the room and a phone pad in the hand, test locally (the SDK falls back to the keyboard), run `npx okona-cli check`, push to your private sandbox with `npx okona-cli push … --sandbox`, and publish only when you say so. Logging in (`npx okona-cli login`) needs a person to approve a code in the Okona portal; the skill knows to stop and ask.
 
 ## Links
 
 - Docs: https://okonaonline.com/developers/docs.html#html5 · https://okonaonline.com/developers/docs.html#publish-api
 - Live docs over MCP: `https://okonaonline.com/mcp`
-- CLI: `npx okona` · Starter: `npm create okona-game`
+- CLI: `npx okona-cli` · Starter: `npm create okona-game`
 - Platform source: https://github.com/earthcrosser/okona-platform (this skill is mirrored from `skills/okona-game` there)
 
 MIT licensed.

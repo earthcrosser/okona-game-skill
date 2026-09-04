@@ -14,13 +14,13 @@ Okona (https://okonaonline.com) hosts HTML5 games and gives them phones as contr
 3. **Play it locally.** Open `index.html` in a browser (or `npx serve`). The SDK falls back to the keyboard as P1 (WASD/arrows, Space = A, Shift = B) and to USB gamepads, so the loop can be exercised without Okona. If you can run a browser, do; if not, at least confirm the file parses and every referenced asset exists.
 4. **Check, then push to the sandbox first.**
    ```
-   npx okona check <dir>
-   npx okona push <dir> --game <id> --icon icon.png --sandbox
+   npx okona-cli check <dir>
+   npx okona-cli push <dir> --game <id> --icon icon.png --sandbox
    ```
    `check` catches the shape mistakes (no root `index.html`, over 50 MB, missing SDK tag, dialogs). The sandbox is the developer's private copy with real phones.
-5. **Publish only when the human says so.** `npx okona push <dir> --game <id> --publish` (or `npx okona publish <id>`) puts it on the public link. Hand back the link: `https://play.okonaonline.com/games/?id=<id>` — a TV opens it, phones scan the code on screen.
+5. **Publish only when the human says so.** `npx okona-cli push <dir> --game <id> --publish` (or `npx okona-cli publish <id>`) puts it on the public link. Hand back the link: `https://play.okonaonline.com/games/?id=<id>` — a TV opens it, phones scan the code on screen.
 
-The first time on a machine: `npx okona login` prints a URL and an 8-character code; the person opens the URL signed in to the Okona portal and approves it (this needs a human — say so and wait). For unattended use they can create a publish key under *Account → API Keys* and set `OKONA_API_KEY`. Create the game record once: `npx okona create --title "…" --description "…" --runtime html5` → prints the id. Full CLI/API detail: `reference/publishing.md`.
+The first time on a machine: `npx okona-cli login` prints a URL and an 8-character code; the person opens the URL signed in to the Okona portal and approves it (this needs a human — say so and wait). For unattended use they can create a publish key under *Account → API Keys* and set `OKONA_API_KEY`. Create the game record once: `npx okona-cli create --title "…" --description "…" --runtime html5` → prints the id. Full CLI/API detail: `reference/publishing.md`.
 
 ## The contract
 
@@ -50,7 +50,7 @@ Rules that follow from the runtime:
 - **Draw the join code yourself** until the room is full — there is no system join screen. `Okona.drawQr(canvas)` paints the current code (a labelled placeholder until one exists), and `pairing` fires again when the image is ready, so redrawing on the event is correct.
 - **`navigator.getGamepads()` is empty inside Okona** on purpose. Read `Okona.pads()` only.
 - **Bundle libraries** into the folder rather than loading them from a CDN; a venue's network can break the game.
-- Complete SDK reference: `reference/sdk.md`. This skill is published at https://github.com/earthcrosser/okona-game-skill (mirrored from the platform repo's `skills/okona-game`). Live docs, always current, over MCP: `https://okonaonline.com/mcp` (tools `list_doc_sections`, `read_doc_section`, `search_docs`).
+- Complete SDK reference: `reference/sdk.md`. Live docs, always current, over MCP: `https://okonaonline.com/mcp` (tools `list_doc_sections`, `read_doc_section`, `search_docs`).
 
 ## What a good result looks like
 
