@@ -26,7 +26,7 @@ The phone pad layout is A/B/X/Y, one stick (left), bumpers, a d-pad, Select/Star
 
 `Okona.on(name, fn)` / `Okona.off(name, fn)`; the pad object is the argument for seat events.
 
-- `ready` — the SDK knows where it runs; `Okona.mode` is `'live'`, `'sandbox'` or `'standalone'`. `Okona.ready(fn)` runs immediately if already ready. Start the frame loop here.
+- `ready` — the SDK knows where it runs; `Okona.mode` is `'live'`, `'sandbox'` or `'standalone'` (until `ready` fires it reads `'hosted'` inside a frame — branch on it only after `ready`). `Okona.ready(fn)` runs immediately if already ready. Start the frame loop here.
 - `join` — a seat was taken (first connection of a controller). Set identity here.
 - `leave` — permanently freed (rare: eviction when all six seats are wanted).
 - `park` / `resume` — the controller went away / the same one came back to the same seat.
@@ -48,7 +48,7 @@ The URL is reissued periodically; a code drawn once and never redrawn goes stale
 
 - `Okona.rumble(pad, low, high)` — dual-motor magnitudes 0..1 (~200 ms). Phones do not vibrate through the relay; gamepads that support it do.
 - `Okona.track(name, props)` — a custom analytics event on the live link (name ≤ 64 chars, props JSON ≤ 1 KB, ≤ 500 per page load); appears on the developer's Analytics tab and in the Analytics API as `customEvents`. Returns `false` standalone.
-- `Okona.mode` — `'live'` | `'sandbox'` | `'standalone'`; `Okona.isHosted` — `true` inside Okona.
+- `Okona.mode` — `'live'` | `'sandbox'` | `'standalone'` after `ready` (`'hosted'` before it, inside a frame); `Okona.isHosted` — `true` inside Okona.
 - `Okona.watermark` — `true` when the free-tier "Powered by Okona" mark is shown (leave a corner clear top-left).
 - `Okona.buildUrl` — the build's base URL inside Okona.
 - `Okona.snapshot` — the raw 106-byte input snapshot (the same bytes the Unity SDK reads), for engines that want bytes.
