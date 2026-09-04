@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<!--
+  Okona HTML5 example: "Bumper Party" — a one-file canvas game that shows the
+  whole SDK contract. Six phones scan the code on screen, each becomes a
+  bumper car; sticks drive, A boosts, B honks (rumble). Parked players fade
+  out and come back to the same car. Open the file in a browser and the
+  keyboard is P1 (WASD + Space); on Okona the same code gets phones.
+
+  Upload this folder as an HTML5 game (Build tab → HTML5) and publish.
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Bumper Party</title>
+<style>
+  html, body { margin: 0; height: 100%; background: #0D1B2A; overflow: hidden; }
+  canvas { display: block; width: 100vw; height: 100vh; }
+</style>
+</head>
+<body>
+<canvas id="game"></canvas>
+<script src="https://okonaonline.com/sdk/okona.js"></script>
+<script>
+(function () {
+  'use strict';
+  var canvas = document.getElementById('game');
+  var ctx = canvas.getContext('2d');
+  var qrCanvas = document.createElement('canvas');
+  qrCanvas.width = qrCanvas.height = 512;
+
+  var COLORS = ['#E8A525', '#4FC3F7', '#81C784', '#F06292', '#BA68C8', '#FF8A65'];
+  var EMOJI = ['🚗', '🚙', '🏎️', '🚕', '🚓', '🚑'];
+  var NAMES = ['Gold', 'Sky', 'Mint', 'Rose', 'Plum', 'Coral'];
+
+  var W = 1920, H = 1080;             // logical size; scaled to the screen
+  var cars = [];
+  for (var i = 0; i < 6; i++) {
+    cars.push({ x: 300 + i * 260, y: 540, vx: 0, vy: 0, angle: 0, boost: 0, honk: 0, score: 0 });
+  }
+
+  function resize() {
+    var dpr = window.devicePixelRatio || 1;
+    canvas.width = Math.floor(window.innerWidth * dpr);
+    canvas.height = Math.floor(window.innerHeight * dpr);
+  }
+  window.addEventListener('resize', resize);
+  resize();
+
+  // Give each phone its car on join; fade on park, greet on resume.
+  Okona.on('join', function (pad) {
+    Okona.players.setIdentity(pad, { name: NAMES[pad.index], icon: EMOJI[pad.index], accent: COLORS[pad.index] });
+    cars[pad.index].boost = 1;
+  });
+  Okona.on('pairing', function () { Okona.drawQr(qrCanvas); });
+
+  function step(dt) {
+    var pads = Okona.pads();
+    for (var i = 0; i < 6; i++) {
+      var p = pads[i], c = cars[i];
+      if (!p.connected || p.parked) { c.vx *= 0.9; c.vy *= 0.9; continue; }
+      var accel = p.justPressed('a') ? 1400 : 700;
+      if (p.justPressed('a')) c.boost = 1;
+      if (p.justPressed('b')) { c.honk = 1; Okona.rumble(p, 0.3, 0.8); }
+      c.vx += p.axes.lx * accel * dt;
+      c.vy += p.axes.ly * accel * dt;
+      c.vx *= 0.96; c.vy *= 0.96;
+      c.x += c.vx * dt; c.y += c.vy * dt;
+      if (Math.abs(c.vx) + Math.abs(c.vy) > 20) c.angle = Math.atan2(c.vy, c.vx);
+      if (c.x < 60) { c.x = 60; c.vx = -c.vx * 0.6; }
+      if (c.x > W - 60) { c.x = W - 60; c.vx = -c.vx * 0.6; }
+      if (c.y < 60) { c.y = 60; c.vy = -c.vy * 0.6; }
+      if (c.y > H - 60) { c.y = H - 60; c.vy = -c.vy * 0.6; }
+      c.boost = Math.max(0, c.boost - dt * 2);
+      c.honk = Math.max(0, c.honk - dt * 3);
+    }
+    // Bumps: the faster car scores.
+    for (var a = 0; a < 6; a++) for (var b = a + 1; b < 6; b++) {
+      if (!pads[a].connected || !pads[b].connected) continue;
+      var A = cars[a], B = cars[b];
+      var dx = B.x - A.x, dy = B.y - A.y, d = Math.sqrt(dx * dx + dy * dy);
+      if (d < 100 && d > 0) {
+        var nx = dx / d, ny = dy / d;
+        var sa = Math.abs(A.vx) + Math.abs(A.vy), sb = Math.abs(B.vx) + Math.abs(B.vy);
+        if (sa > sb + 50) { A.score++; Okona.rumble(pads[b], 0.6, 0.6); }
+        else if (sb > sa + 50) { B.score++; Okona.rumble(pads[a], 0.6, 0.6); }
+        var push = (100 - d) * 8;
+        A.vx -= nx * push; A.vy -= ny * push; B.vx += nx * push; B.vy += ny * push;
+        if (Okona.mode === 'live') Okona.track('bump', { a: a + 1, b: b + 1 });
+      }
+    }
+    return pads;
+  }
+
+  function draw(pads) {
+    var sx = canvas.width / W, sy = canvas.height / H;
+    ctx.setTransform(sx, 0, 0, sy, 0, 0);
+    ctx.fillStyle = '#0D1B2A';
+    ctx.fillRect(0, 0, W, H);
+    // Arena
+    ctx.strokeStyle = '#2A4A6F';
+    ctx.lineWidth = 6;
+    ctx.strokeRect(30, 30, W - 60, H - 60);
+
+    var connected = 0;
+    for (var i = 0; i < 6; i++) if (pads[i].connected) connected++;
+
+    // Join panel (until the room is full)
+    if (connected < 6) {
+      var size = connected === 0 ? 440 : 220;
+      var px = W - size - 70, py = 70;
+      ctx.fillStyle = '#FFFFFF';
+      ctx.fillRect(px - 16, py - 16, size + 32, size + 32);
+      ctx.drawImage(qrCanvas, px, py, size, size);
+      ctx.fillStyle = '#FFFFFF';
+      ctx.font = 'bold ' + (connected === 0 ? 44 : 26) + 'px system-ui, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('Scan to join', px + size / 2, py + size + 70);
+      ctx.fillStyle = '#A0B4C8';
+      ctx.font = (connected === 0 ? 24 : 18) + 'px system-ui, sans-serif';
+      ctx.fillText(Okona.pairing.caption || (Okona.mode === 'standalone' ? 'Keyboard: WASD + Space' : ''), px + size / 2, py + size + 105);
+    }
+
+    // Title + scores
+    ctx.textAlign = 'left';
+    ctx.fillStyle = '#E8A525';
+    ctx.font = 'bold 56px system-ui, sans-serif';
+    ctx.fillText('BUMPER PARTY', 70, 120);
+    ctx.font = '28px system-ui, sans-serif';
+    for (var s = 0; s < 6; s++) {
+      var p = pads[s];
+      ctx.fillStyle = p.connected ? COLORS[s] : '#3A5578';
+      var label = 'P' + (s + 1) + '  ' + (p.connected ? NAMES[s] + '  ' + cars[s].score + (p.parked ? '  (away)' : '') : 'open');
+      ctx.fillText(label, 70, 180 + s * 40);
+    }
+
+    // Cars
+    for (var c = 0; c < 6; c++) {
+      var pad = pads[c], car = cars[c];
+      if (!pad.connected) continue;
+      ctx.save();
+      ctx.translate(car.x, car.y);
+      ctx.rotate(car.angle);
+      ctx.globalAlpha = pad.parked ? 0.3 : 1;
+      if (car.boost > 0) {
+        ctx.fillStyle = 'rgba(232,165,37,' + car.boost * 0.6 + ')';
+        ctx.beginPath(); ctx.arc(0, 0, 70 + car.boost * 30, 0, Math.PI * 2); ctx.fill();
+      }
+      ctx.fillStyle = COLORS[c];
+      ctx.fillRect(-50, -32, 100, 64);
+      ctx.fillStyle = '#0D1B2A';
+      ctx.fillRect(10, -22, 28, 44);
+      ctx.restore();
+      ctx.globalAlpha = 1;
+      ctx.textAlign = 'center';
+      ctx.font = '36px system-ui, sans-serif';
+      ctx.fillText(EMOJI[c], car.x, car.y - 60);
+      if (car.honk > 0) {
+        ctx.fillStyle = '#FFFFFF';
+        ctx.font = 'bold 32px system-ui, sans-serif';
+        ctx.fillText('HONK!', car.x, car.y - 100);
+      }
+    }
+  }
+
+  var last = performance.now();
+  function frame(now) {
+    var dt = Math.min(0.05, (now - last) / 1000);
+    last = now;
+    draw(step(dt));
+    requestAnimationFrame(frame);
+  }
+  Okona.ready(function () {
+    Okona.drawQr(qrCanvas);
+    requestAnimationFrame(frame);
+  });
+})();
+</script>
+</body>
+</html>
