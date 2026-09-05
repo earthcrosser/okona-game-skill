@@ -6,6 +6,8 @@
 
 `Okona.pads()` → an array of 6 pad objects (index 0–5, seat = index + 1), **updated in place**. Call it once per frame; `justPressed()` compares against the previous `pads()` call.
 
+**Call `pads()` exactly once per frame and keep the array.** A second call — or `Okona.pad(i)`, which refreshes all six — resets `justPressed()` for that frame. You never need it elsewhere: `Okona.rumble(i, …)`, `Okona.players.setIdentity(i, …)` and `clearIdentity(i)` take a plain seat index (or the pad object) and never touch input state.
+
 | Field | Type | Meaning |
 |---|---|---|
 | `index` / `slot` | 0–5 / 1–6 | The seat. Seats are held while a controller is away; nobody is renumbered. |
@@ -18,7 +20,7 @@
 | `triggers` | `{lt, rt}` 0..1 | Analog triggers |
 | `mask` | uint32 | Raw button bits (standard Gamepad indices) |
 
-`Okona.pad(i)` → one pad (also refreshes all). `Okona.MAX_PLAYERS === 6`. `Okona.BUTTONS` = the 17 names in bit order.
+`Okona.pad(i)` → one pad (it refreshes all six, so it counts as your once-per-frame call — don't mix it with `pads()` in the same frame). `Okona.MAX_PLAYERS === 6`. `Okona.BUTTONS` = the 17 names in bit order.
 
 The phone pad layout is A/B/X/Y, one stick (left), bumpers, a d-pad, Select/Start; games that also use the right stick or triggers should treat them as optional. Home (`home`) is forwarded to the game — decide what it means, or ignore it.
 
@@ -46,7 +48,7 @@ The URL is reissued periodically; a code drawn once and never redrawn goes stale
 
 ## Rumble, analytics, misc
 
-- `Okona.rumble(pad, low, high)` — dual-motor magnitudes 0..1 (~200 ms). Phones do not vibrate through the relay; gamepads that support it do.
+- `Okona.rumble(padOrIndex, low, high)` — dual-motor magnitudes 0..1 (~200 ms); takes a seat index or the pad object, so no extra `pads()` call is needed. Phones do not vibrate through the relay; gamepads that support it do.
 - `Okona.track(name, props)` — a custom analytics event on the live link (name ≤ 64 chars, props JSON ≤ 1 KB, ≤ 500 per page load); appears on the developer's Analytics tab and in the Analytics API as `customEvents`. Returns `false` standalone.
 - `Okona.mode` — `'live'` | `'sandbox'` | `'standalone'` after `ready` (`'hosted'` before it, inside a frame); `Okona.isHosted` — `true` inside Okona.
 - `Okona.watermark` — `true` when the free-tier "Powered by Okona" mark is shown (leave a corner clear top-left).

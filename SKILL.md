@@ -31,7 +31,7 @@ One script tag, one global:
 ```
 
 ```js
-var pads = Okona.pads();                   // six pads, every frame, call ONCE per frame
+var pads = Okona.pads();                   // six pads, call ONCE per frame and keep the array (a 2nd call, or Okona.pad(i), resets justPressed; rumble/setIdentity take an index)
 var p = pads[0];
 p.connected; p.parked; p.kind;             // seat taken · controller away (seat held) · 'phone'|'gamepad'|'keyboard'
 p.axes.lx; p.axes.ly;                      // −1..1, +Y is DOWN (Gamepad API convention)
@@ -50,7 +50,7 @@ Rules that follow from the runtime:
 - **Draw the join code yourself** until the room is full — there is no system join screen. `Okona.drawQr(canvas)` paints the current code (a labelled placeholder until one exists), and `pairing` fires again when the image is ready, so redrawing on the event is correct.
 - **`navigator.getGamepads()` is empty inside Okona** on purpose. Read `Okona.pads()` only.
 - **Bundle libraries** into the folder rather than loading them from a CDN; a venue's network can break the game.
-- Complete SDK reference: `reference/sdk.md`. This skill is published at https://github.com/earthcrosser/okona-game-skill (mirrored from the platform repo's `skills/okona-game`). Live docs, always current, over MCP: `https://okonaonline.com/mcp` (tools `list_doc_sections`, `read_doc_section`, `search_docs`).
+- Complete SDK reference: `reference/sdk.md`. This skill is published at https://github.com/earthcrosser/okona-game-skill. Live docs, always current, over MCP: `https://okonaonline.com/mcp` (tools `list_doc_sections`, `read_doc_section`, `search_docs`).
 
 ## What a good result looks like
 

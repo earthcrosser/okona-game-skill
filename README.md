@@ -25,6 +25,6 @@ Start from `npm create okona-game`, design for a TV across the room and a phone 
 - Docs: https://okonaonline.com/developers/docs.html#html5 · https://okonaonline.com/developers/docs.html#publish-api
 - Live docs over MCP: `https://okonaonline.com/mcp`
 - CLI: `npx okona-cli` · Starter: `npm create okona-game`
-- Platform source: https://github.com/earthcrosser/okona-platform (this skill is mirrored from `skills/okona-game` there)
+- Maintained as part of the Okona platform (a private repository); this repository and the zip are the published copies. Questions or problems: this repo's Issues, or support@okonaonline.com
 
 MIT licensed.
