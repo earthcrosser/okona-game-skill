@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<!--
+  Okona HTML5 example: "Tavern Tales" — a one-file choose-your-path party
+  game for the RPG controller (Okona Pro). The screen tells the story; each
+  phone shows ONLY that player's choices (Okona.choices). Five scenes, each a
+  private decision — one scene whispers something different to every player,
+  one lets the party vote for each other by name — then a scoreboard.
+
+  The phone pad is set to RPG on the game's Controller tab (or
+  `okona controller <id> rpg`), so nobody has a gamepad: tapping option i on
+  the phone arrives as gamepad button i (A B X Y LB), which is what
+  Okona.choices.picked() reads. Start is the one extra button — here it opens
+  "Quit and save?". Opened in a plain browser the keyboard stands in for P1
+  (Space/Shift/F/R/Q = options 1–5, Enter = Start).
+
+  Upload this folder as an HTML5 game and set its Controller tab to RPG.
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tavern Tales</title>
+<style>
+  html, body { margin: 0; height: 100%; background: #1A1209; overflow: hidden; }
+  canvas { display: block; width: 100vw; height: 100vh; }
+</style>
+</head>
+<body>
+<canvas id="game"></canvas>
+<script src="https://okonaonline.com/sdk/okona.js"></script>
+<script>
+(function () {
+  'use strict';
+  var canvas = document.getElementById('game');
+  var ctx = canvas.getContext('2d');
+  var qrCanvas = document.createElement('canvas');
+  qrCanvas.width = qrCanvas.height = 512;
+
+  var W = 1920, H = 1080;
+  var COLORS = ['#E8A525', '#4FC3F7', '#81C784', '#F06292', '#BA68C8', '#FF8A65'];
+  var EMOJI = ['🛡️', '🏹', '🧙', '🗡️', '🪕', '🐉'];
+  var NAMES = ['Knight', 'Ranger', 'Wizard', 'Rogue', 'Bard', 'Drake'];
+  var SCENE_SECONDS = 30;
+  var OUTCOME_SECONDS = 14;
+
+  // ---- the story --------------------------------------------------------
+  // Each option: label + icon for the phone, what it does to the player
+  // (gold / glory), and the line they see afterwards. `rule` turns the whole
+  // party's answers into the outcome the screen tells.
+  var SCENES = [
+    {
+      title: 'The Crossroads', art: '🌩️',
+      text: 'A storm rolls in over the moor and the road splits three ways.',
+      prompt: 'The storm is coming. Where to?',
+      options: [
+        { label: 'Shelter at the castle', icon: '🏰', gold: 0, glory: 1, line: 'The lord feeds you and asks for a favour.' },
+        { label: 'Warm up at the tavern', icon: '🍺', gold: 1, glory: 0, line: 'You win a coin at dice and a story from the barkeep.' },
+        { label: 'Push on through the woods', icon: '🌲', gold: -1, glory: 2, line: 'Soaked, scratched, and first to the bridge.' }
+      ],
+      rule: function (counts) {
+        var best = counts.indexOf(Math.max.apply(null, counts));
+        return ['The party shelters at the castle — and owes the lord a favour.',
+                'The party dries off at the tavern. The barkeep mentions a troll.',
+                'The party pushes through the woods and reaches the bridge by dawn.'][best];
+      }
+    },
+    {
+      title: 'The Troll Bridge', art: '🧌',
+      text: 'A troll blocks the only bridge. "Toll," it says, "or teeth."',
+      prompt: 'The troll wants a toll. You…',
+      options: [
+        { label: 'Fight!', icon: '⚔️', gold: 0, glory: 0, line: '' },
+        { label: 'Pay the toll', icon: '💰', gold: -2, glory: 0, line: 'Two coins lighter, but dry.' },
+        { label: 'Bluff your way past', icon: '🗣️', gold: 0, glory: 1, line: 'The troll is not clever. It works.' },
+        { label: 'Sneak under the bridge', icon: '🤫', gold: 0, glory: 0, line: 'Muddy, unseen, across.' }
+      ],
+      rule: function (counts, players) {
+        var answered = counts.reduce(function (a, b) { return a + b; }, 0);
+        var won = counts[0] > 0 && counts[0] * 2 >= answered;
+        players.forEach(function (pl) {
+          if (pl.answer !== 0) return;
+          pl.glory += won ? 3 : -2;
+          pl.line = won ? 'The troll flees! +3 glory.' : 'Too few blades. The troll wins. −2 glory.';
+        });
+        if (counts[0] === 0) return 'Nobody fights. The troll counts its coins.';
+        return won ? 'Enough blades drawn — the troll runs for the hills!' : 'The fighters are outnumbered by one troll. Everyone else tiptoes past.';
+      }
+    },
+    {
+      title: 'The Whisper', art: '🕵️',
+      text: 'In the market a hooded stranger brushes past each of you — and whispers something nobody else hears.',
+      prompt: function (pl) { return 'Psst, ' + pl.name + '. Take this pouch of gold. Nobody saw. Keep it?'; },
+      options: [
+        { label: 'Keep it. Quietly.', icon: '🤫', gold: 3, glory: 0, line: 'Three coins richer.' },
+        { label: 'Share it with the party', icon: '🤝', gold: 1, glory: 1, line: 'The party toasts your honesty.' },
+        { label: 'Refuse it', icon: '🙅', gold: 0, glory: 2, line: 'A clean conscience. +2 glory.' }
+      ],
+      rule: function (counts, players) {
+        if (counts[0] >= 2) {
+          players.forEach(function (pl) { if (pl.answer === 0) { pl.glory -= 2; pl.line += ' The party notices the bulging pockets. −2 glory.'; } });
+          return counts[0] + ' pouches vanished into ' + counts[0] + ' pockets. Trust runs thin tonight.';
+        }
+        if (counts[0] === 1) return 'One purse is heavier than it was. Nobody says a word.';
+        return 'Nobody took the stranger\'s gold. The stranger looks disappointed.';
+      }
+    },
+    {
+      title: 'The Dragon\'s Riddle', art: '🐉',
+      text: '"Answer me," rumbles the dragon, "and pass. What has keys but opens no locks?"',
+      prompt: 'What has keys but opens no locks?',
+      options: [
+        { label: 'A jailer', icon: '🗝️', gold: 0, glory: -1, line: 'Wrong. The dragon yawns fire.' },
+        { label: 'A piano', icon: '🎹', gold: 0, glory: 3, line: 'Correct! The dragon bows. +3 glory.' },
+        { label: 'A map', icon: '🗺️', gold: 0, glory: 0, line: 'The dragon narrows its eyes. Not quite.' },
+        { label: 'A banana', icon: '🍌', gold: 1, glory: 0, line: 'The dragon laughs so hard it drops a coin.' }
+      ],
+      rule: function (counts) {
+        if (counts[1] === 0) return 'Nobody said "a piano". The dragon lets you pass anyway, out of pity.';
+        return counts[1] + (counts[1] === 1 ? ' hero knew' : ' heroes knew') + ' the answer: a piano.';
+      }
+    },
+    {
+      title: 'The Feast', art: '🎶',
+      text: 'Back at the tavern the bard tunes up. "Who," she asks each of you, "should tonight\'s song be about?"',
+      prompt: 'Who does the song go to?',
+      vote: true,   // options are the OTHER players' names — built per phone
+      rule: function (counts, players, opts) {
+        var top = -1, topVotes = 0;
+        counts.forEach(function (c, i) { if (c > topVotes) { topVotes = c; top = i; } });
+        if (top < 0) return 'Nobody voted. The bard sings about the troll.';
+        var hero = opts[top].player;
+        hero.glory += 3; hero.line = 'The song is about YOU. +3 glory.';
+        return 'The bard sings of ' + hero.emoji + ' ' + hero.name + ' — ' + topVotes + (topVotes === 1 ? ' vote' : ' votes') + '.';
+      }
+    }
+  ];
+
+  // ---- state ------------------------------------------------------------
+  var state = 'lobby';          // lobby | scene | outcome | ending
+  var sceneIndex = 0;
+  var timer = 0;                // seconds left in the scene / outcome
+  var outcomeText = '';
+  var lastPads = null;          // the latest Okona.pads() — never call pad(i) mid-frame (it resets justPressed)
+  var players = [];
+  for (var i = 0; i < 6; i++) {
+    players.push({ index: i, name: NAMES[i], emoji: EMOJI[i], color: COLORS[i],
+      gold: 0, glory: 0, answer: null, line: '', left: false, quitAsk: false, options: null, sent: '' });
+  }
+
+  function resize() {
+    var dpr = window.devicePixelRatio || 1;
+    canvas.width = Math.floor(window.innerWidth * dpr);
+    canvas.height = Math.floor(window.innerHeight * dpr);
+  }
+  window.addEventListener('resize', resize);
+  resize();
+
+  Okona.on('join', function (pad) {
+    var pl = players[pad.index];
+    Okona.players.setIdentity(pad, { name: pl.name, icon: pl.emoji, accent: pl.color });
+    pl.sent = '';                                   // a fresh phone: resend whatever it should show
+    if (state === 'scene') pl.options = optionsFor(pl);   // a late joiner is dealt in
+  });
+  Okona.on('leave', function (pad) { players[pad.index].sent = ''; });
+  Okona.on('pairing', function () { Okona.drawQr(qrCanvas); });
+
+  // Who is playing right now: seated, not parked, not quit.
+  function active(pads) {
+    return players.filter(function (pl) { var p = pads[pl.index]; return p.connected && !p.parked && !pl.left; });
+  }
+  // P1 drives the flow — the lowest active seat (so a parked P1 never stalls the party).
+  function host(pads) { var a = active(pads); return a.length ? a[0] : null; }
+
+  function optionsFor(pl) {
+    var sc = SCENES[sceneIndex];
+    if (!sc.vote) return sc.options;
+    var others = players.filter(function (o) { return o !== pl && !o.left && lastPads && lastPads[o.index].connected; });
+    if (others.length === 0) return [{ label: 'Sing about me', icon: pl.emoji, gold: 0, glory: 1, line: 'A song for one.', player: pl }];
+    return others.slice(0, 5).map(function (o) { return { label: o.name, icon: o.emoji, gold: 0, glory: 0, line: 'You voted for ' + o.name + '.', player: o }; });
+  }
+
+  function startScene(n) {
+    sceneIndex = n; state = 'scene'; timer = SCENE_SECONDS;
+    players.forEach(function (pl) { pl.answer = null; pl.line = ''; pl.options = optionsFor(pl); });
+  }
+
+  function resolveScene(pads) {
+    var sc = SCENES[sceneIndex];
+    var n = sc.vote ? 5 : sc.options.length;
+    var counts = []; for (var k = 0; k < n; k++) counts.push(0);
+    var voteOpts = null;
+    active(pads).forEach(function (pl) {
+      if (pl.answer === null || pl.answer < 0) { pl.line = 'You hesitated, and the moment passed.'; return; }
+      var o = pl.options[pl.answer];
+      pl.gold += o.gold; pl.glory += o.glory; pl.line = o.line;
+      if (sc.vote) {
+        // votes count by the player voted FOR, not by option index (each phone's list differs)
+        if (!voteOpts) { voteOpts = players.map(function (t) { return { player: t }; }); counts = players.map(function () { return 0; }); }
+        counts[o.player.index]++;
+      } else counts[pl.answer]++;
+    });
+    outcomeText = sc.rule(counts, active(pads), voteOpts || sc.options);
+    state = 'outcome'; timer = OUTCOME_SECONDS;
+    if (Okona.mode === 'live') Okona.track('scene_end', { scene: sceneIndex + 1 });
+  }
+
+  function nextScene(pads) {
+    if (sceneIndex + 1 < SCENES.length) startScene(sceneIndex + 1);
+    else { state = 'ending'; if (Okona.mode === 'live') Okona.track('round_end', { players: active(pads).length }); }
+  }
+
+  function restart() {
+    players.forEach(function (pl) { pl.gold = 0; pl.glory = 0; pl.answer = null; pl.line = ''; pl.left = false; pl.quitAsk = false; });
+    state = 'lobby';
+  }
+
+  // ---- phones: what each one should show right now -----------------------
+  // Sent only when it changes (the SDK/relay dedupe too, but this keeps
+  // the log quiet). A prompt with NO options is the phone's idle message.
+  function syncPhones(pads) {
+    var h = host(pads);
+    players.forEach(function (pl) {
+      var p = pads[pl.index];
+      if (!p.connected) return;
+      var msg;
+      if (pl.quitAsk) msg = { prompt: 'Quit and save your progress?', icon: '💾', options: ['Keep playing', 'Quit & save'] };
+      else if (pl.left) msg = { prompt: 'Saved: ' + pl.gold + ' gold, ' + pl.glory + ' glory. Press Start to rejoin.', icon: '💾', options: [] };
+      else if (state === 'lobby') msg = pl === h ? { prompt: 'Everyone in?', icon: '🍺', options: ['Set out!'] }
+                                              : { prompt: 'Waiting for ' + (h ? h.name : 'the party') + ' to set out…', icon: '🍺', options: [] };
+      else if (state === 'scene') {
+        var sc = SCENES[sceneIndex];
+        if (pl.answer === null) msg = { prompt: typeof sc.prompt === 'function' ? sc.prompt(pl) : sc.prompt, icon: sc.art, options: pl.options };
+        else msg = { prompt: 'You chose "' + pl.options[pl.answer].label + '". Waiting for the others…', icon: pl.options[pl.answer].icon, options: [] };
+      }
+      else if (state === 'outcome') msg = pl === h ? { prompt: pl.line || 'Onward?', icon: SCENES[sceneIndex].art, options: ['Continue'] }
+                                                  : { prompt: pl.line || 'Onward!', icon: SCENES[sceneIndex].art, options: [] };
+      else msg = pl === h ? { prompt: 'The end! ' + pl.gold + ' gold, ' + pl.glory + ' glory.', icon: '🏆', options: ['Play again'] }
+                          : { prompt: 'The end! ' + pl.gold + ' gold, ' + pl.glory + ' glory. Thanks for playing.', icon: '🏆', options: [] };
+      var wire = { prompt: msg.prompt, icon: msg.icon,
+        options: msg.options.map(function (o) { return typeof o === 'string' ? o : { label: o.label, icon: o.icon }; }) };
+      var ser = JSON.stringify(wire);
+      if (ser === pl.sent) return;
+      pl.sent = ser;
+      Okona.choices.show(p, wire);
+    });
+  }
+
+  // ---- input ------------------------------------------------------------
+  function step(dt) {
+    var pads = lastPads = Okona.pads();
+    var h = host(pads);
+    for (var i = 0; i < 6; i++) {
+      var p = pads[i], pl = players[i];
+      if (!p.connected || p.parked) continue;
+      if (p.justPressed('start')) {
+        if (pl.left) { pl.left = false; pl.sent = ''; if (state === 'scene') pl.options = optionsFor(pl); }
+        else pl.quitAsk = !pl.quitAsk;
+        continue;
+      }
+      var picked = Okona.choices.picked(p);
+      if (picked < 0) continue;
+      if (pl.quitAsk) { pl.quitAsk = false; if (picked === 1) { pl.left = true; pl.answer = null; } continue; }
+      if (pl.left) continue;
+      if (state === 'lobby') { if (pl === h && picked === 0) startScene(0); }
+      else if (state === 'scene') { if (pl.answer === null && picked < pl.options.length) pl.answer = picked; }
+      else if (state === 'outcome') { if (pl === h && picked === 0) nextScene(pads); }
+      else if (state === 'ending') { if (pl === h && picked === 0) restart(); }
+    }
+    if (state === 'scene') {
+      var act = active(pads);
+      if (act.length > 0) timer -= dt;          // nobody at the table: the clock waits too
+      var waiting = act.filter(function (pl) { return pl.answer === null; });
+      if (act.length > 0 && (waiting.length === 0 || timer <= 0)) resolveScene(pads);
+    } else if (state === 'outcome') {
+      timer -= dt;
+      if (timer <= 0) nextScene(pads);
+    }
+    syncPhones(pads);
+    return pads;
+  }
+
+  // ---- the screen --------------------------------------------------------
+  function text(str, x, y, size, color, align, weight) {
+    ctx.fillStyle = color || '#F3E9D2';
+    ctx.font = (weight || '') + ' ' + size + 'px system-ui, sans-serif';
+    ctx.textAlign = align || 'left';
+    ctx.fillText(str, x, y);
+  }
+  function wrap(str, x, y, size, maxWidth, lineHeight, color) {
+    ctx.font = size + 'px system-ui, sans-serif';
+    var words = str.split(' '), line = '', yy = y;
+    for (var i = 0; i < words.length; i++) {
+      var test = line + words[i] + ' ';
+      if (ctx.measureText(test).width > maxWidth && line) { text(line, x, yy, size, color); line = words[i] + ' '; yy += lineHeight; }
+      else line = test;
+    }
+    text(line, x, yy, size, color);
+    return yy + lineHeight;
+  }
+
+  function drawJoinPanel(pads) {
+    var connected = 0;
+    for (var i = 0; i < 6; i++) if (pads[i].connected) connected++;
+    if (connected >= 6) return;
+    var size = connected === 0 ? 400 : 200;
+    var px = W - size - 80, py = 80;
+    ctx.fillStyle = '#FFFFFF';
+    ctx.fillRect(px - 14, py - 14, size + 28, size + 28);
+    ctx.drawImage(qrCanvas, px, py, size, size);
+    text('Scan to join', px + size / 2, py + size + (connected === 0 ? 62 : 44), connected === 0 ? 40 : 24, '#F3E9D2', 'center', 'bold');
+    var caption = Okona.pairing.caption || (Okona.mode === 'standalone'
+      ? (connected === 0 ? 'Keyboard: Space/Shift/F/R/Q = choices 1–5, Enter = Start' : 'Keyboard: Space/Shift/F/R/Q, Enter') : '');
+    text(caption, px + size / 2, py + size + (connected === 0 ? 96 : 72), connected === 0 ? 22 : 16, '#B8A88A', 'center');
+  }
+
+  function drawParty(pads, x, y) {
+    text('THE PARTY', x, y, 26, '#B8A88A', 'left', 'bold');
+    for (var i = 0; i < 6; i++) {
+      var p = pads[i], pl = players[i], yy = y + 50 + i * 60;
+      if (!p.connected) { text('P' + (i + 1) + '  — open seat —', x, yy, 26, '#5A4A32'); continue; }
+      var status = pl.left ? 'saved & out' : p.parked ? 'away' : state === 'scene' ? (pl.answer === null ? 'choosing…' : '✓ decided') : '';
+      text(pl.emoji + ' ' + pl.name, x, yy, 30, pl.color, 'left', 'bold');
+      text('💰 ' + pl.gold + '   ⭐ ' + pl.glory, x + 230, yy, 26, '#F3E9D2');
+      text(status, x + 410, yy, 24, pl.left || p.parked ? '#8A7A62' : pl.answer === null ? '#E8A525' : '#81C784');
+    }
+  }
+
+  function draw(pads) {
+    var sx = canvas.width / W, sy = canvas.height / H;
+    ctx.setTransform(sx, 0, 0, sy, 0, 0);
+    ctx.fillStyle = '#1A1209';
+    ctx.fillRect(0, 0, W, H);
+    ctx.fillStyle = '#241A0E';
+    ctx.fillRect(0, 0, W, 8);
+
+    var h = host(pads);
+    if (state === 'lobby') {
+      text('TAVERN TALES', 100, 200, 96, '#E8A525', 'left', 'bold');
+      text('A choose-your-path party for 1–6 phones', 100, 270, 36, '#B8A88A');
+      wrap('Every scene is a decision — on your own phone, in private. Fight the troll or pay it, keep the stranger\'s gold or share it, answer the dragon, and vote for tonight\'s hero. Most glory wins.', 100, 350, 30, 1000, 42, '#F3E9D2');
+      text(h ? h.emoji + ' ' + h.name + ': tap "Set out!" on your phone when everyone is in.' : 'Waiting for the first phone…', 100, 560, 34, '#E8A525', 'left', 'bold');
+      drawParty(pads, 100, 660);
+      drawJoinPanel(pads);
+      return;
+    }
+
+    var sc = SCENES[sceneIndex];
+    text(state === 'ending' ? 'After ' + SCENES.length + ' scenes' : 'Scene ' + (sceneIndex + 1) + ' of ' + SCENES.length, 100, 120, 26, '#B8A88A');
+    text(state === 'ending' ? '🏆' : sc.art, 100, 300, 150, '#F3E9D2');
+    if (state === 'scene') {
+      text(sc.title, 320, 250, 72, '#E8A525', 'left', 'bold');
+      wrap(sc.text, 320, 330, 36, 1000, 50);
+      text('Decide on your phone.', 320, 520, 30, '#B8A88A');
+      // timer bar
+      var frac = Math.max(0, timer / SCENE_SECONDS);
+      ctx.fillStyle = '#332615'; ctx.fillRect(100, 1000, W - 200, 18);
+      ctx.fillStyle = frac < 0.25 ? '#F06292' : '#E8A525'; ctx.fillRect(100, 1000, (W - 200) * frac, 18);
+      text(Math.ceil(timer) + 's', W - 100, 985, 28, '#B8A88A', 'right');
+    } else if (state === 'outcome') {
+      text(sc.title, 320, 250, 72, '#E8A525', 'left', 'bold');
+      var yy = wrap(outcomeText, 320, 330, 36, 1000, 50, '#F3E9D2');
+      active(pads).forEach(function (pl) {
+        var chosen = pl.answer !== null && pl.answer >= 0 ? pl.options[pl.answer] : null;
+        text(pl.emoji + ' ' + pl.name + (chosen ? ' — ' + chosen.icon + ' ' + chosen.label : ' — hesitated'), 320, yy + 20, 28, pl.color, 'left', 'bold');
+        text(pl.line, 320, yy + 52, 24, '#B8A88A');
+        yy += 76;
+      });
+      text(h ? h.emoji + ' ' + h.name + ': tap "Continue" (or wait ' + Math.ceil(timer) + 's)' : '', 320, 1010, 26, '#B8A88A');
+    } else {
+      text('THE END', 320, 250, 72, '#E8A525', 'left', 'bold');
+      var ranked = players.filter(function (pl) { return pads[pl.index].connected; })
+        .sort(function (a, b) { return (b.glory * 2 + b.gold) - (a.glory * 2 + a.gold); });
+      ranked.forEach(function (pl, r) {
+        text((r === 0 ? '🏆 ' : (r + 1) + '. ') + pl.emoji + ' ' + pl.name, 320, 340 + r * 64, 40, r === 0 ? '#E8A525' : pl.color, 'left', 'bold');
+        text('⭐ ' + pl.glory + ' glory   💰 ' + pl.gold + ' gold', 820, 340 + r * 64, 32, '#F3E9D2');
+      });
+      text(h ? h.emoji + ' ' + h.name + ': tap "Play again" on your phone.' : '', 320, 1010, 26, '#B8A88A');
+    }
+    drawParty(pads, 1300, 420);
+    drawJoinPanel(pads);
+  }
+
+  var last = performance.now();
+  function frame(now) {
+    var dt = Math.min(0.05, (now - last) / 1000);
+    last = now;
+    draw(step(dt));
+    requestAnimationFrame(frame);
+  }
+  Okona.ready(function () {
+    Okona.drawQr(qrCanvas);
+    requestAnimationFrame(frame);
+  });
+})();
+</script>
+</body>
+</html>

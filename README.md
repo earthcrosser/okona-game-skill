@@ -2,7 +2,7 @@
 
 Build and publish a **phone-controlled multiplayer HTML5 game on [Okona](https://okonaonline.com)** with your AI coding assistant. Up to six players scan a code on the screen and their phones become gamepads; Okona hosts the game at one link.
 
-This repository is the skill in the open [Agent Skills](https://agentskills.io) format: `SKILL.md` (the workflow and the SDK contract), `reference/` (the full SDK, TV-and-phone design rules, publishing via the `okona` CLI and API) and a complete example game.
+This repository is the skill in the open [Agent Skills](https://agentskills.io) format: `SKILL.md` (the workflow and the SDK contract), `reference/` (the full SDK, TV-and-phone design rules, publishing via the `okona` CLI and API) and two complete example games: `examples/bumper-party/` (a gamepad party game) and `examples/tavern-tales/` (the RPG controller — choices on each phone, Okona Pro).
 
 ## Install
 
