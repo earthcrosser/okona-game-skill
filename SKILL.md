@@ -41,6 +41,8 @@ p.triggers.lt; p.triggers.rt;              // 0..1
 Okona.on('join' | 'leave' | 'park' | 'resume', function (pad) {});
 Okona.on('pairing', function () { Okona.drawQr(canvas); });   // redraw the join code on every pairing event
 Okona.players.setIdentity(pad, { name: 'Gold', icon: '🚗', accent: '#E8A525' });  // on the phone's pill
+Okona.choices.show(pad, { prompt: 'Fight or flee?', options: ['Fight', 'Flee'] });  // RPG controller (Pro): private prompt on the phone
+Okona.choices.picked(pad);                 // 0..4 or -1 — option i = button i (a b x y lb); Okona.choices.clear(pad)
 Okona.rumble(pad, low, high);  Okona.track('round_end', { winner: 1 });
 Okona.mode;                                // 'live' | 'sandbox' | 'standalone' (opened outside Okona)
 ```
