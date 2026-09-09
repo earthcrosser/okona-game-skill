@@ -15,12 +15,13 @@ Okona (https://okonaonline.com) hosts HTML5 games and gives them phones as contr
 4. **Check, then push to the sandbox first.**
    ```
    npx okona-cli check <dir>
-   npx okona-cli push <dir> --game <id> --icon icon.png --sandbox
+   npx okona-cli push <dir> --sandbox          # with the starter's okona.json; otherwise --game <id> --icon icon.png
    ```
-   `check` catches the shape mistakes (no root `index.html`, over 50 MB, missing SDK tag, dialogs). The sandbox is the developer's private copy with real phones.
-5. **Publish only when the human says so.** `npx okona-cli push <dir> --game <id> --publish` (or `npx okona-cli publish <id>`) puts it on the public link. Hand back the link: `https://play.okonaonline.com/games/?id=<id>` — a TV opens it, phones scan the code on screen.
+   `check` catches the shape mistakes (no root `index.html`, over 50 MB, missing SDK tag, dialogs, a broken `okona.json`). The sandbox is the developer's private copy with real phones.
+5. **Publish only when the human says so.** `npx okona-cli push <dir> --publish` (or `npx okona-cli publish <id>`) puts it on the public link. Hand back the link: `https://play.okonaonline.com/games/?id=<id>` — a TV opens it, phones scan the code on screen.
+6. **Fill in the catalog from here too.** Title, description, genre, keywords, a YouTube link, the icon and up to six screenshots all live in `okona.json` next to the build (the starter writes it; `push` syncs it) — or `npx okona-cli update <id> --keywords "…" --screenshots ./shots`. Screenshots: capture the game at 16:9, name them `1.png`, `2.png`, … so they upload in order. Nothing about a game needs the portal.
 
-The first time on a machine: `npx okona-cli login` prints a URL and an 8-character code; the person opens the URL signed in to the Okona portal and approves it (this needs a human — say so and wait). For unattended use they can create a publish key under *Account → API Keys* and set `OKONA_API_KEY`. Create the game record once: `npx okona-cli create --title "…" --description "…" --runtime html5` → prints the id. Pick the phone-pad layout the game uses: `--controller basic|full|xl` on create, or `npx okona-cli controller <id> full` later (Full if the game reads sticks or triggers; the phone shows exactly that layout). Full CLI/API detail: `reference/publishing.md`.
+The first time on a machine: `npx okona-cli login` prints a URL and an 8-character code; the person opens the URL signed in to the Okona portal and approves it (this needs a human — say so and wait). For unattended use they can create a publish key under *Account → API Keys* and set `OKONA_API_KEY`. Create the game record once: `npx okona-cli create` in the folder (reads `okona.json`, writes the new id back into it) — or `npx okona-cli create --title "…" --description "…" --runtime html5` → prints the id. Pick the phone-pad layout the game uses: `--controller basic|full|xl` on create, or `npx okona-cli controller <id> full` later (Full if the game reads sticks or triggers; the phone shows exactly that layout). Full CLI/API detail: `reference/publishing.md`.
 
 ## The contract
 
