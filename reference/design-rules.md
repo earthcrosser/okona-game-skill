@@ -15,7 +15,7 @@ Okona games are played on a screen nobody touches — a TV, a projector, a bar's
 - **Parked ≠ gone.** A `parked` player has put their phone down or their screen turned off; their seat is held and they come back as the same player. Freeze/fade them, keep their score, don't free the seat, don't respawn them as new.
 - **Identity on the phone.** On `join`, set a name, an emoji or image, and the player's colour, so each person can look at their own hand and know which car/blob/paddle is theirs.
 - **P1 drives the flow.** Starting a round, replaying, leaving a menu: seat 1 presses A. Say so on screen.
-- **Choices on the phone (RPG games, Okona Pro).** With the Controller tab on RPG, the screen tells the story and each phone shows only that player's options (`Okona.choices.show` / `picked` / `clear`). Push a prompt on their turn, clear it once answered, and make the answer visible on screen within a second. Short prompts (the phone is landscape). Give Start a meaning — "Quit and save?" as another prompt. An idle phone is a player staring at a blank pad: keep the screen doing something for them, and put your own words on the pad while they wait (`show(pad, { prompt: 'Stand by' })` — no options = a message).
+- **Pick the pad layout your game uses.** On the game's Controller tab (or `okona controller <id> <basic|full|xl>`), choose Basic, Full or XL — the phone shows exactly that, and players can't switch. A game that reads sticks or triggers needs Full; a two-button game is friendliest on XL.
 
 ## The screen
 

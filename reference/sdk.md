@@ -22,7 +22,7 @@
 
 `Okona.pad(i)` → one pad (it refreshes all six, so it counts as your once-per-frame call — don't mix it with `pads()` in the same frame). `Okona.MAX_PLAYERS === 6`. `Okona.BUTTONS` = the 17 names in bit order.
 
-The phone pad layout is A/B/X/Y, one stick (left), bumpers, a d-pad, Select/Start; games that also use the right stick or triggers should treat them as optional. Home (`home`) is forwarded to the game — decide what it means, or ignore it.
+The phone pad shows the layout the game picked on its Controller tab (see Hosting facts): **Basic** = d-pad, A/B/X/Y, Select/Start; **Full** adds both sticks, triggers and shoulders; **XL** = an oversized d-pad and A/B only. A game that reads sticks or triggers must pick Full — on Basic those controls don't exist on the phone. Home (`home`) is forwarded to the game — decide what it means, or ignore it.
 
 ## Events
 
@@ -46,12 +46,6 @@ The URL is reissued periodically; a code drawn once and never redrawn goes stale
 
 `Okona.players.setIdentity(padOrIndex, { name, icon, accent })` — `name` ≤ 24 chars; `icon` = an emoji / short text **or** a relative path to an image in the build folder (`'icons/tank.png'` — png/jpg/webp/gif/svg; external URLs are refused); `accent` = `'#rrggbb'` (the pill's dot). `Okona.players.clearIdentity(pad)` reverts to "Player N". `Okona.players.connected()` → count. Identity is a no-op standalone (returns `false`).
 
-## Choices on the phone — the RPG controller (Okona Pro)
-
-With the game's Controller tab set to **RPG**, a player's phone shows no gamepad: it is idle ("Watch the screen") until the game sends that player a prompt + 1–5 options, then shows them as buttons (plus **Start**). Every phone is private — ask each player something different.
-
-`Okona.choices.show(padOrIndex, { prompt, icon, options })` — `prompt` ≤ 200 chars; `icon` optional (emoji or a build-relative image path, like identity); `options` = up to 5 of a string **or** `{ label, icon }` (`label` ≤ 48; blank ones dropped, extras ignored). **A prompt with no options is a message** — `show(pad, { prompt: 'Stand by' })` puts that text alone on the phone's idle card instead of the default "Watch the screen". `Okona.choices.clear(padOrIndex)` → back to idle. `Okona.choices.picked(pad)` → the option tapped since the last `pads()` call: `0..4` or `-1` — call it once per frame like `justPressed`. **Return path:** option `i` holds gamepad button `i` — `a b x y lb` (`Okona.choices.BUTTONS`) — so a keyboard/USB pad answers with those buttons too, and nothing else changes. The phone keeps showing the options (tapped one marked) until `show` or `clear`. `Start` (`pad.justPressed('start')`) is the player's "menu / quit?" — the game decides what it does (a second prompt, "Quit and save?", is the usual answer). No-ops standalone, on gamepad/keyboard players, and on a game not set to RPG; if Pro lapses the pad falls back to Basic and options 1–4 still arrive through A/B/X/Y.
-
 ## Rumble, analytics, misc
 
 - `Okona.rumble(padOrIndex, low, high)` — dual-motor magnitudes 0..1 (~200 ms); takes a seat index or the pad object, so no extra `pads()` call is needed. Phones do not vibrate through the relay; gamepads that support it do.
@@ -68,8 +62,8 @@ Not inside Okona: keyboard = P1 on the first mapped key (WASD/IJKL sticks, arrow
 ## Hosting facts that shape a game
 
 - The link is `https://play.okonaonline.com/games/?id=<id>`; it runs in any browser or webview, full screen, no Okona UI over the game. If the page fails to load it retries by itself (unattended screens).
-- Free tier: a small "Powered by Okona" watermark top-left and a chip on the phone pad. Okona Pro (per organization) removes both, same link, and unlocks the RPG controller (Controller tab → RPG; `Okona.choices`).
-- Controller tab (per game, no republish): the pad's starting layout — Basic (default: d-pad, A/B/X/Y, Select/Start), Full (adds both sticks + triggers + shoulders — declare it if the game reads sticks) or XL; or RPG (Pro, locked: choices only).
+- Free tier: a small "Powered by Okona" watermark top-left and a chip on the phone pad. Okona Pro (per organization) removes both, same link, and includes the Analytics API.
+- Controller tab (per game, no republish): the game PICKS its phone-pad layout and the phone shows exactly that — players can't switch. Basic (d-pad, A/B/X/Y, Select/Start — what a game gets until it picks), Full (adds both sticks + triggers + shoulders — pick it if the game reads sticks or triggers) or XL (oversized d-pad + A/B, first-time players). Set it from the CLI: `okona controller <id> full`.
 - Builds: a folder with `index.html` at its root, ≤ 50 MB, ≤ 500 files, no dotfiles. Text assets are gzipped by the host. Assets are referenced relatively, exactly as on disk.
 - Old screens: signage WebViews can be pre-2020 Chromium. Prefer ES2015 syntax in shipped code, avoid CSS `inset` and flex `gap`, and never rely on a CDN at runtime.
 - Dialogs (`alert`, `confirm`, `prompt`), popups and top-level navigation are blocked inside the game frame.

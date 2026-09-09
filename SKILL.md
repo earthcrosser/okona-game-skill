@@ -20,7 +20,7 @@ Okona (https://okonaonline.com) hosts HTML5 games and gives them phones as contr
    `check` catches the shape mistakes (no root `index.html`, over 50 MB, missing SDK tag, dialogs). The sandbox is the developer's private copy with real phones.
 5. **Publish only when the human says so.** `npx okona-cli push <dir> --game <id> --publish` (or `npx okona-cli publish <id>`) puts it on the public link. Hand back the link: `https://play.okonaonline.com/games/?id=<id>` — a TV opens it, phones scan the code on screen.
 
-The first time on a machine: `npx okona-cli login` prints a URL and an 8-character code; the person opens the URL signed in to the Okona portal and approves it (this needs a human — say so and wait). For unattended use they can create a publish key under *Account → API Keys* and set `OKONA_API_KEY`. Create the game record once: `npx okona-cli create --title "…" --description "…" --runtime html5` → prints the id. An RPG game (choices on the phone) also needs the pad set to RPG: `--controller rpg` on create, or `npx okona-cli controller <id> rpg` later — Okona Pro; the command says so if the organization lacks it. Full CLI/API detail: `reference/publishing.md`.
+The first time on a machine: `npx okona-cli login` prints a URL and an 8-character code; the person opens the URL signed in to the Okona portal and approves it (this needs a human — say so and wait). For unattended use they can create a publish key under *Account → API Keys* and set `OKONA_API_KEY`. Create the game record once: `npx okona-cli create --title "…" --description "…" --runtime html5` → prints the id. Pick the phone-pad layout the game uses: `--controller basic|full|xl` on create, or `npx okona-cli controller <id> full` later (Full if the game reads sticks or triggers; the phone shows exactly that layout). Full CLI/API detail: `reference/publishing.md`.
 
 ## The contract
 
@@ -41,8 +41,6 @@ p.triggers.lt; p.triggers.rt;              // 0..1
 Okona.on('join' | 'leave' | 'park' | 'resume', function (pad) {});
 Okona.on('pairing', function () { Okona.drawQr(canvas); });   // redraw the join code on every pairing event
 Okona.players.setIdentity(pad, { name: 'Gold', icon: '🚗', accent: '#E8A525' });  // on the phone's pill
-Okona.choices.show(pad, { prompt: 'Fight or flee?', options: ['Fight', 'Flee'] });  // RPG controller (Pro): private prompt on the phone
-Okona.choices.picked(pad);                 // 0..4 or -1 — option i = button i (a b x y lb); Okona.choices.clear(pad)
 Okona.rumble(pad, low, high);  Okona.track('round_end', { winner: 1 });
 Okona.mode;                                // 'live' | 'sandbox' | 'standalone' (opened outside Okona)
 ```
@@ -56,7 +54,7 @@ Rules that follow from the runtime:
 
 ## What a good result looks like
 
-The game boots straight into a lobby with a large join code and the caption under it, seats fill with names and colours as phones scan, P1 starts the round, late joiners are seated mid-round, a parked player is visibly "away" and comes back, a results screen offers "play again", and the phone pill shows each player's character. `examples/bumper-party/` is a complete one-file game that does all of this in ~200 lines. `examples/tavern-tales/` is the same for the RPG controller: a choose-your-path party where the screen tells the story and every scene is a private decision on each phone (`Okona.choices`), including a scene that whispers something different to every player and a vote whose options are the other players' names.
+The game boots straight into a lobby with a large join code and the caption under it, seats fill with names and colours as phones scan, P1 starts the round, late joiners are seated mid-round, a parked player is visibly "away" and comes back, a results screen offers "play again", and the phone pill shows each player's character. `examples/bumper-party/` is a complete one-file game that does all of this in ~200 lines.
 
 ## Do not
 
