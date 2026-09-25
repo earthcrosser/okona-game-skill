@@ -67,3 +67,4 @@ Not inside Okona: keyboard = P1 on the first mapped key (WASD/IJKL sticks, arrow
 - Builds: a folder with `index.html` at its root, ≤ 50 MB, ≤ 500 files, no dotfiles. Text assets are gzipped by the host. Assets are referenced relatively, exactly as on disk.
 - Old screens: signage WebViews can be pre-2020 Chromium. Prefer ES2015 syntax in shipped code, avoid CSS `inset` and flex `gap`, and never rely on a CDN at runtime.
 - Dialogs (`alert`, `confirm`, `prompt`), popups and top-level navigation are blocked inside the game frame.
+- The game frame is an isolated origin: `localStorage`, `sessionStorage`, IndexedDB and cookies are unavailable (access throws — wrap it in `try`/`catch` and keep running without it), and the game can't reach the page around it — only the SDK talks to Okona. Its own files load normally (relative URLs; `fetch`/XHR work).

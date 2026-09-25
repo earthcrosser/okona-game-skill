@@ -36,6 +36,7 @@ Okona games are played on a screen nobody touches — a TV, a projector, a bar's
 - A folder with `index.html` at its root. ≤ 50 MB total, ≤ 500 files, no dotfiles or `node_modules`.
 - **Bundle every library into the folder.** A venue's network may block CDNs; a game that fetches Phaser from the internet at boot is a game that sometimes doesn't start.
 - Assets referenced relatively, exactly as on disk. Case-sensitive on the host.
+- No persistent storage: the game runs in an isolated origin, so `localStorage`/IndexedDB/cookies throw. Wrap any use in `try`/`catch`; a round-based party game shouldn't need saves anyway.
 - Prefer ES2015 syntax in the shipped bundle and avoid CSS `inset` / flex `gap` — old signage WebViews.
 - An icon (png/jpg/webp/gif, ≤ 2 MB) for the portal.
 
