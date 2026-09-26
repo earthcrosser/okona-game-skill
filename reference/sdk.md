@@ -42,6 +42,8 @@ The phone pad shows the layout the game picked on its Controller tab (see Hostin
 
 The URL is reissued periodically; a code drawn once and never redrawn goes stale. Redraw on `pairing`.
 
+`available` can also turn `false` mid-run: when the screen's connection drops for more than a few seconds the code would lead nowhere, so a `pairing` event withdraws it (`url` null; `drawQr` paints the placeholder), and a later one brings a fresh code. Hide or grey the join panel while it's false; seated players keep playing.
+
 ## Identity on the phone
 
 `Okona.players.setIdentity(padOrIndex, { name, icon, accent })` — `name` ≤ 24 chars; `icon` = an emoji / short text **or** a relative path to an image in the build folder (`'icons/tank.png'` — png/jpg/webp/gif/svg; external URLs are refused); `accent` = `'#rrggbb'` (the pill's dot). `Okona.players.clearIdentity(pad)` reverts to "Player N". `Okona.players.connected()` → count. Identity is a no-op standalone (returns `false`).
