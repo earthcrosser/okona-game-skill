@@ -20,6 +20,7 @@ With an `okona.json` in the game folder (the starter writes one) the record live
 ```json
 { "game": "<id>", "title": "Bumper Party", "description": "Six cars, one arena.", "genre": "multiplayer-party",
   "keywords": ["party", "cars"], "youtubeUrl": "", "controller": "full",
+  "playersMin": 2, "playersMax": 6, "playTime": "under-5",
   "icon": "icon.png", "screenshots": "shots", "build": "." }
 ```
 
@@ -43,8 +44,8 @@ Base `https://okonaonline.com/api/v1`, header `Authorization: Bearer ok_live_…
 | Method & path | Body → result |
 |---|---|
 | `GET /games` | `{ games: [{ id, title, runtime, status: draft\|live\|updating, link, build: { complete, files, totalBytes }, hasIcon, … }] }` |
-| `POST /games` | `{ title, description, runtime: "html5"\|"unity", genre?, keywords?, youtubeUrl?, controller? }` → `{ game }` (201) |
-| `GET /games/{id}` · `PATCH /games/{id}` | read the full record (`keywords` as a list, `youtubeUrl`, `icon` + `screenshots` as `{ name, url }`, `controller`, `build`); update `title` / `description` / `genre` / `keywords` (list or comma string, ≤ 20) / `youtubeUrl` (a YouTube link or `""`) / `runtime` (patching a live game starts an update; the live build keeps serving) and/or `controller` — the phone pad's layout, `"full"` or `{ layout: "basic"\|"full"\|"xl" }`: a presentation field that applies to the next phone that connects and never starts an update. `game.controller.layout` reads it back (`basic` until the game picks) |
+| `POST /games` | `{ title, description, runtime: "html5"\|"unity", genre?, keywords?, youtubeUrl?, controller?, playersMin?, playersMax?, playTime? }` → `{ game }` (201) |
+| `GET /games/{id}` · `PATCH /games/{id}` | read the full record (`keywords` as a list, `youtubeUrl`, `icon` + `screenshots` as `{ name, url }`, `controller`, `build`); update `title` / `description` / `genre` / `keywords` (list or comma string, ≤ 20) / `youtubeUrl` (a YouTube link or `""`) / `playersMin` + `playersMax` (optional party facts: whole numbers 1–6, `null` clears) / `playTime` (`under-5`\|`5-15`\|`15-30`\|`30-plus` minutes, or `""`) / `runtime` (patching a live game starts an update; the live build keeps serving) and/or `controller` — the phone pad's layout, `"full"` or `{ layout: "basic"\|"full"\|"xl" }`: a presentation field that applies to the next phone that connects and never starts an update. `game.controller.layout` reads it back (`basic` until the game picks) |
 | `POST /games/{id}/build` | `{ runtime, files: [{ path, size }], icon?: { name, size } }` → `{ uploads: [{ path, url, method: "PUT", headers }], icon?, expiresAt }` — PUT each file to its `url` with exactly those headers (20-minute expiry; they include a signed byte range, so each `size` must be the file's exact size in bytes). HTML5: the tree, root `index.html`, ≤ 50 MB, ≤ 500 files. Unity: exactly `loader.js`, `data.br`, `framework.js.br`, `wasm.br` (renamed from Unity's base name) plus `StreamingAssets/…`; each file ≤ 512 MB, the build ≤ 1 GB and ≤ 1000 files. The previous staged build is cleared first. |
 | `POST /games/{id}/build/commit` | the same body once uploaded → `{ game }` (sizes are read from storage) |
 | `POST /games/{id}/media` | `{ icon?: { name, size }, screenshots?: [{ name, size }] }` → `{ icon?: { name, storagePath, url, method, headers }, screenshots?: [same], expiresAt }` — PUT each image to its `url` with those headers. Icon ≤ 2 MB replaces the current one; screenshots ≤ 6 × 5 MB, png/jpg/webp/gif, and the list is DECLARATIVE (it becomes the game's list in that order; `[]` clears; absent = untouched). |
