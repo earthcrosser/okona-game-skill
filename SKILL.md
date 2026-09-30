@@ -1,11 +1,11 @@
 ---
 name: okona-game
-description: Build and publish a phone-controlled multiplayer HTML5 game on Okona. Up to six players scan a code on the screen and their phones become gamepads; Okona hosts the game at one link. Use when the user wants a party game, a couch/TV/bar game, a game friends can play with their phones, or asks to put a game on Okona.
+description: Build a phone-controlled multiplayer HTML5 game and submit it to the Okona catalog. Up to six players scan a code on the screen and their phones become gamepads; Okona reviews the game and plays it in the Okona app. Use when the user wants a party game, a couch/TV/bar game, a game friends can play with their phones, or asks to put a game on Okona.
 ---
 
 # Okona game
 
-Okona (https://okonaonline.com) hosts HTML5 games and gives them phones as controllers. You write an ordinary canvas/JS game that reads six pads from one script; Okona handles the phones, the pairing code, hosting and the link. This skill is the whole contract plus the workflow that ships a working game on the first try.
+Okona (https://okonaonline.com) is a curated catalog of phone-controlled multiplayer games. You write an ordinary canvas/JS game that reads six pads from one script; Okona handles the phones, the pairing code and hosting, and reviews every game before it goes into the catalog. There are no public game links: games play inside Okona. This skill is the whole contract plus the workflow that ships a working game on the first try.
 
 ## Workflow
 
@@ -18,7 +18,7 @@ Okona (https://okonaonline.com) hosts HTML5 games and gives them phones as contr
    npx okona-cli push <dir> --sandbox          # with the starter's okona.json; otherwise --game <id> --icon icon.png
    ```
    `check` catches the shape mistakes (no root `index.html`, over 50 MB, missing SDK tag, dialogs, a broken `okona.json`). The sandbox is the developer's private copy with real phones.
-5. **Publish only when the human says so.** `npx okona-cli push <dir> --publish` (or `npx okona-cli publish <id>`) puts it on the public link. Hand back the link: `https://play.okonaonline.com/games/?id=<id>` — a TV opens it, phones scan the code on screen.
+5. **Submit for review only when the human says so.** `npx okona-cli push <dir> --publish` (or `npx okona-cli publish <id>`) submits it: the build is frozen and Okona approves it into the catalog or sends it back with what to change. `npx okona-cli game <id>` shows the status (`in-review`, `changes-requested` with the reason, `live`); if changes are requested, fix them and submit again. The sandbox (step 4) is where the human plays it on real phones meanwhile.
 6. **Fill in the catalog from here too.** Title, description, genre, keywords, a YouTube link, the icon and up to six screenshots all live in `okona.json` next to the build (the starter writes it; `push` syncs it) — or `npx okona-cli update <id> --keywords "…" --screenshots ./shots`. Screenshots: capture the game at 16:9, name them `1.png`, `2.png`, … so they upload in order. Nothing about a game needs the portal.
 
 The first time on a machine: `npx okona-cli login` prints a URL and an 8-character code; the person opens the URL signed in to the Okona portal and approves it (this needs a human — say so and wait). For unattended use they can create a publish key under *Account → API Keys* and set `OKONA_API_KEY`. Create the game record once: `npx okona-cli create` in the folder (reads `okona.json`, writes the new id back into it) — or `npx okona-cli create --title "…" --description "…" --runtime html5` → prints the id. Pick the phone-pad layout the game uses: `--controller basic|full|xl` on create, or `npx okona-cli controller <id> full` later (Full if the game reads sticks or triggers; the phone shows exactly that layout). Full CLI/API detail: `reference/publishing.md`.
@@ -59,7 +59,7 @@ The game boots straight into a lobby with a large join code and the caption unde
 
 ## Do not
 
-- Do not publish without being asked; sandbox first, publish on the word "go" (or equivalent).
+- Do not submit without being asked; sandbox first, submit on the word "go" (or equivalent).
 - Do not add a keyboard/mouse control scheme for players — the keyboard exists for local testing only.
 - Do not fetch or ship assets from arbitrary origins; everything in the build folder is fine.
 - Do not read `navigator.getGamepads()` or use a game engine's own gamepad plugin for input.

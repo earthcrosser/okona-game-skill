@@ -51,9 +51,9 @@ The URL is reissued periodically; a code drawn once and never redrawn goes stale
 ## Rumble, analytics, misc
 
 - `Okona.rumble(padOrIndex, low, high)` — dual-motor magnitudes 0..1 (~200 ms); takes a seat index or the pad object, so no extra `pads()` call is needed. Phones do not vibrate through the relay; gamepads that support it do.
-- `Okona.track(name, props)` — a custom analytics event on the live link (name ≤ 64 chars, props JSON ≤ 1 KB, ≤ 500 per page load); appears on the developer's Analytics tab and in the Analytics API as `customEvents`. Returns `false` standalone.
+- `Okona.track(name, props)` — a custom analytics event while the game is played in Okona (name ≤ 64 chars, props JSON ≤ 1 KB, ≤ 500 per page load); appears on the developer's Analytics tab as `customEvents`. Returns `false` standalone.
 - `Okona.mode` — `'live'` | `'sandbox'` | `'standalone'` after `ready` (`'hosted'` before it, inside a frame); `Okona.isHosted` — `true` inside Okona.
-- `Okona.watermark` — `true` when the free-tier "Powered by Okona" mark is shown (leave a corner clear top-left).
+- `Okona.watermark` — whether Okona draws a mark over the game; inside the Okona app it is always `false` (kept for older games).
 - `Okona.buildUrl` — the build's base URL inside Okona.
 - `Okona.snapshot` — the raw 106-byte input snapshot (the same bytes the Unity SDK reads), for engines that want bytes.
 
@@ -63,9 +63,9 @@ Not inside Okona: keyboard = P1 on the first mapped key (WASD/IJKL sticks, arrow
 
 ## Hosting facts that shape a game
 
-- The link is `https://play.okonaonline.com/games/?id=<id>`; it runs in any browser or webview, full screen, no Okona UI over the game. If the page fails to load it retries by itself (unattended screens).
-- Free tier: a small "Powered by Okona" watermark top-left and a chip on the phone pad. Okona Pro (per organization) removes both, same link, and includes the Analytics API.
-- Controller tab (per game, no republish): the game PICKS its phone-pad layout and the phone shows exactly that — players can't switch. Basic (d-pad, A/B/X/Y, Select/Start — what a game gets until it picks), Full (adds both sticks + triggers + shoulders — pick it if the game reads sticks or triggers) or XL (oversized d-pad + A/B, first-time players). Set it from the CLI: `okona controller <id> full`.
+- Games play only inside the Okona app (there are no public game links), full screen, with no Okona UI over the game except the Okona menu that Home opens (every pad reads neutral while it's open; the `menu` event lets a game pause).
+- Every game is reviewed before it goes into the catalog: submitting freezes the build; Okona approves it or sends it back with a reason.
+- Controller tab (per game, no review needed): the game PICKS its phone-pad layout and the phone shows exactly that — players can't switch. Basic (d-pad, A/B/X/Y, Select/Start — what a game gets until it picks), Full (adds both sticks + triggers + shoulders — pick it if the game reads sticks or triggers) or XL (oversized d-pad + A/B, first-time players). Set it from the CLI: `okona controller <id> full`.
 - Builds: a folder with `index.html` at its root, ≤ 50 MB, ≤ 500 files, no dotfiles. Text assets are gzipped by the host. Assets are referenced relatively, exactly as on disk.
 - Old screens: signage WebViews can be pre-2020 Chromium. Prefer ES2015 syntax in shipped code, avoid CSS `inset` and flex `gap`, and never rely on a CDN at runtime.
 - Dialogs (`alert`, `confirm`, `prompt`), popups and top-level navigation are blocked inside the game frame.
