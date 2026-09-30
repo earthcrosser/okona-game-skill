@@ -22,19 +22,22 @@
 
 `Okona.pad(i)` → one pad (it refreshes all six, so it counts as your once-per-frame call — don't mix it with `pads()` in the same frame). `Okona.MAX_PLAYERS === 6`. `Okona.BUTTONS` = the 17 names in bit order.
 
-The phone pad shows the layout the game picked on its Controller tab (see Hosting facts): **Basic** = d-pad, A/B/X/Y, Select/Start; **Full** adds both sticks, triggers and shoulders; **XL** = an oversized d-pad and A/B only. A game that reads sticks or triggers must pick Full — on Basic those controls don't exist on the phone. Home (`home`) is forwarded to the game — decide what it means, or ignore it.
+The phone pad shows the layout the game picked on its Controller tab (see Hosting facts): **Basic** = d-pad, A/B/X/Y, Select/Start; **Full** adds both sticks, triggers and shoulders; **XL** = an oversized d-pad and A/B only. A game that reads sticks or triggers must pick Full — on Basic those controls don't exist on the phone. Home (`home`) belongs to Okona: in the Okona app it opens the Okona menu and never reaches the game; only standalone and in the sandbox does it arrive like any other button.
 
 ## Events
 
 `Okona.on(name, fn)` / `Okona.off(name, fn)`; the pad object is the argument for seat events.
 
-- `ready` — the SDK knows where it runs; `Okona.mode` is `'live'`, `'sandbox'` or `'standalone'` (until `ready` fires it reads `'hosted'` inside a frame — branch on it only after `ready`). `Okona.ready(fn)` runs immediately if already ready. Start the frame loop here.
+- `ready` — the SDK knows where it runs; `Okona.mode` is `'live'` (the Okona app), `'sandbox'` or `'standalone'` (until `ready` fires it reads `'hosted'` inside a frame — branch on it only after `ready`). `Okona.ready(fn)` runs immediately if already ready. Start the frame loop here.
 - `join` — a seat was taken (first connection of a controller). Set identity here.
 - `leave` — permanently freed (rare: eviction when all six seats are wanted).
 - `park` / `resume` — the controller went away / the same one came back to the same seat.
 - `pairing` — the join code changed **or its image just became drawable**. Redraw on every one.
+- `menu` — the Okona menu opened (`true`) or closed (`false`) over the game in the Okona app; `Okona.menuOpen` holds the state. Every pad already reads neutral while it's open; pause on it if you like.
 
 ## Pairing (the join code)
+
+In the Okona app players usually join before the game loads: the app shows the code on its own screens and in the Okona menu. Nothing is drawn over a running game, so the game's own code is how people join mid-game, and the only way a phone joins in the sandbox.
 
 `Okona.pairing` — `available` (bool), `url`, `caption` (a short line such as "Uses your phone's internet" — print it under the code), `version` (bumps on change), `qrPng` (PNG bytes), `qrUrl` (a `blob:` URL for an `<img>`), `qrImage` (decoded image once loaded). `Okona.pairing.onChange(fn)` = `on('pairing', fn)`.
 
@@ -67,6 +70,6 @@ Not inside Okona: keyboard = P1 on the first mapped key (WASD/IJKL sticks, arrow
 - Every game is reviewed before it goes into the catalog: submitting freezes the build; Okona approves it or sends it back with a reason.
 - Controller tab (per game, no review needed): the game PICKS its phone-pad layout and the phone shows exactly that — players can't switch. Basic (d-pad, A/B/X/Y, Select/Start — what a game gets until it picks), Full (adds both sticks + triggers + shoulders — pick it if the game reads sticks or triggers) or XL (oversized d-pad + A/B, first-time players). Set it from the CLI: `okona controller <id> full`.
 - Builds: a folder with `index.html` at its root, ≤ 50 MB, ≤ 500 files, no dotfiles. Text assets are gzipped by the host. Assets are referenced relatively, exactly as on disk.
-- Old screens: signage WebViews can be pre-2020 Chromium. Prefer ES2015 syntax in shipped code, avoid CSS `inset` and flex `gap`, and never rely on a CDN at runtime.
+- Old screens: TV browsers and webviews can be pre-2020 Chromium. Prefer ES2015 syntax in shipped code, avoid CSS `inset` and flex `gap`, and never rely on a CDN at runtime.
 - Dialogs (`alert`, `confirm`, `prompt`), popups and top-level navigation are blocked inside the game frame.
 - The game frame is an isolated origin: `localStorage`, `sessionStorage`, IndexedDB and cookies are unavailable (access throws — wrap it in `try`/`catch` and keep running without it), and the game can't reach the page around it — only the SDK talks to Okona. Its own files load normally (relative URLs; `fetch`/XHR work).

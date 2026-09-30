@@ -41,21 +41,22 @@ p.triggers.lt; p.triggers.rt;              // 0..1
 
 Okona.on('join' | 'leave' | 'park' | 'resume', function (pad) {});
 Okona.on('pairing', function () { Okona.drawQr(canvas); });   // redraw the join code on every pairing event
+Okona.on('menu', function (open) {});      // the Okona menu (Home) opened/closed over the game; pads already read neutral
 Okona.players.setIdentity(pad, { name: 'Gold', icon: '🚗', accent: '#E8A525' });  // on the phone's pill
 Okona.rumble(pad, low, high);  Okona.track('round_end', { winner: 1 });
-Okona.mode;                                // 'live' | 'sandbox' | 'standalone' (opened outside Okona)
+Okona.mode;                                // 'live' (the Okona app) | 'sandbox' | 'standalone' (opened outside Okona)
 ```
 
 Rules that follow from the runtime:
 - **Seats are held.** A player whose phone screen turned off is `parked`, not gone. Freeze or fade them; do not kill them or free the seat. They return to the same seat (`resume`).
-- **Draw the join code yourself** until the room is full — there is no system join screen. `Okona.drawQr(canvas)` paints the current code (a labelled placeholder until one exists), and `pairing` fires again when the image is ready, so redrawing on the event is correct.
+- **Show the join code in the lobby** until the room is full. In the Okona app players usually arrive already seated (the app shows its own code before the game loads, and again in its Home menu), but nothing is drawn over a running game, so your code is how late arrivals join, and the only way a phone joins in the sandbox. `Okona.drawQr(canvas)` paints the current code (a labelled placeholder until one exists), and `pairing` fires again when the image is ready, so redrawing on the event is correct.
 - **`navigator.getGamepads()` is empty inside Okona** on purpose. Read `Okona.pads()` only.
-- **Bundle libraries** into the folder rather than loading them from a CDN; a venue's network can break the game.
+- **Bundle libraries** into the folder rather than loading them from a CDN; a network that blocks one can break the game.
 - Complete SDK reference: `reference/sdk.md`. This skill is published at https://github.com/earthcrosser/okona-game-skill. Live docs, always current, over MCP: `https://okonaonline.com/mcp` (tools `list_doc_sections`, `read_doc_section`, `search_docs`).
 
 ## What a good result looks like
 
-The game boots straight into a lobby with a large join code and the caption under it, seats fill with names and colours as phones scan, P1 starts the round, late joiners are seated mid-round, a parked player is visibly "away" and comes back, a results screen offers "play again", and the phone pill shows each player's character. `examples/bumper-party/` is a complete one-file game that does all of this in ~200 lines.
+The game boots into a lobby that seats whoever is already connected and shows the join code with its caption for everyone else, seats fill with names and colours as phones scan, P1 starts the round, late joiners are seated mid-round, a parked player is visibly "away" and comes back, a results screen offers "play again", and the phone pill shows each player's character. `examples/bumper-party/` is a complete one-file game that does all of this in ~200 lines.
 
 ## Do not
 
