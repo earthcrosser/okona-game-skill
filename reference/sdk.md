@@ -33,11 +33,11 @@ The phone pad shows the layout the game picked on its Controller tab (see Hostin
 - `leave` — permanently freed (rare: eviction when all six seats are wanted).
 - `park` / `resume` — the controller went away / the same one came back to the same seat.
 - `pairing` — the join code changed **or its image just became drawable**. Redraw on every one.
-- `menu` — the Okona menu opened (`true`) or closed (`false`) over the game in the Okona app; `Okona.menuOpen` holds the state. Every pad already reads neutral while it's open; pause on it if you like.
+- `menu` — the Okona menu opened (`true`) or closed (`false`) over the game in the Okona app, on Home or by itself while no controller is connected; `Okona.menuOpen` holds the state. Every pad already reads neutral while it's open; pause on it if you like.
 
 ## Pairing (the join code)
 
-In the Okona app players usually join before the game loads: the app shows the code on its own screens and in the Okona menu. Nothing is drawn over a running game, so the game's own code is how people join mid-game, and the only way a phone joins in the sandbox.
+In the Okona app players usually join before the game loads: the app shows the code on its own screens, and over a running game the Okona menu shows it (on Home, and by itself whenever nobody is connected; it closes when someone joins). The game's own code is optional: it lets people join mid-game without the menu covering the game, and it is the only way a phone joins in the sandbox.
 
 `Okona.pairing` — `available` (bool), `url`, `caption` (a short line such as "Uses your phone's internet" — print it under the code), `version` (bumps on change), `qrPng` (PNG bytes), `qrUrl` (a `blob:` URL for an `<img>`), `qrImage` (decoded image once loaded). `Okona.pairing.onChange(fn)` = `on('pairing', fn)`.
 
@@ -66,7 +66,7 @@ Not inside Okona: keyboard = P1 on the first mapped key (WASD/IJKL sticks, arrow
 
 ## Hosting facts that shape a game
 
-- Games play only inside the Okona app (there are no public game links), full screen, with no Okona UI over the game except the Okona menu that Home opens (every pad reads neutral while it's open; the `menu` event lets a game pause).
+- Games play only inside the Okona app (there are no public game links), full screen, with no Okona UI over the game except the Okona menu, which Home opens and which opens by itself while no controller is connected (every pad reads neutral while it's open; the `menu` event lets a game pause).
 - Every game is reviewed before it goes into the catalog: submitting freezes the build; Okona approves it or sends it back with a reason.
 - Controller tab (per game, no review needed): the game PICKS its phone-pad layout and the phone shows exactly that — players can't switch. Basic (d-pad, A/B/X/Y, Select/Start — what a game gets until it picks), Full (adds both sticks + triggers + shoulders — pick it if the game reads sticks or triggers) or XL (oversized d-pad + A/B, first-time players). Set it from the CLI: `okona controller <id> full`.
 - Builds: a folder with `index.html` at its root, ≤ 50 MB, ≤ 500 files, no dotfiles. Text assets are gzipped by the host. Assets are referenced relatively, exactly as on disk.
