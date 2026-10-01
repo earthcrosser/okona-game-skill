@@ -32,7 +32,7 @@ With an `okona.json` in the game folder (the starter writes one) the record live
 - `OKONA_API_KEY` in the environment overrides the saved key (`~/.okona/config.json`) — the unattended/CI path.
 - `push` detects the build kind: **HTML5** = `index.html` at the folder root; **Unity WebGL** = the folder Unity produced (a `Build/` with `*.loader.js`, Brotli `.br` files, optional `StreamingAssets/` beside `Build/`). Files upload straight to storage over signed URLs, in parallel.
 - `--sandbox` deploys to the key owner's private sandbox (they open the returned URL signed in to the portal) — do this before `--publish` unless told otherwise. It is the only place outside Okona itself where real phones can pair: opening `index.html` in a browser gives keyboard + USB pads, and the optional dev harness (https://okonaonline.com/developers/okona-harness.zip, Python 3.7+, `python devtools/okona-test/okona-serve.py <dir>`) runs the real Okona shell with scripted phone players but has no relay room.
-- `--publish` submits for review exactly like the portal's button: needs a title, a description, a complete build and an icon; allowed from `draft` or `changes-requested` (a 409 says why otherwise, e.g. already in review). Organizations may have up to 10 games in the catalog; the error message says so if the ceiling is hit.
+- `--publish` submits for review exactly like the portal's button: needs a title, a description, a complete build and an icon; allowed from `draft` or `changes-requested` (a 409 says why otherwise, e.g. already in review). A studio has a ceiling on games in the catalog; the error message says so if it is hit.
 - `update` is the portal's editor from the terminal — every field it has. The screenshot list is **declarative**: `--screenshots` (or the manifest's) REPLACES what is there, in that order (up to six, png/jpg/webp/gif ≤ 5 MB each); re-send to reorder, `--clear-screenshots` to empty. Changing a game that's in the catalog starts an update (status `updating`; players keep the approved version) — add `--publish`, or run `publish <id>`, to submit it for review. `game <id> --json` returns the record with media URLs.
 - An approved update replaces the version players have. `unpublish` removes the game from the catalog; submit it again to bring it back.
 - Games created by the CLI appear in the owner's portal like any other and can be edited there.
@@ -41,7 +41,7 @@ Exit codes: 0 ok, 1 refused/failed (message on stderr, or `{"error"}` with `--js
 
 ## The API (what the CLI calls)
 
-Base `https://okonaonline.com/api/v1`, header `Authorization: Bearer ok_live_…` (a publish key, from Account → API Keys or `okona login`), JSON bodies, 60 requests/minute per key. A key acts for its organization; a game outside it is a 404.
+Base `https://okonaonline.com/api/v1`, header `Authorization: Bearer ok_live_…` (a publish key, from Account → API Keys or `okona login`), JSON bodies, 60 requests/minute per key. A key acts for its studio; a game outside it is a 404.
 
 | Method & path | Body → result |
 |---|---|
@@ -55,7 +55,7 @@ Base `https://okonaonline.com/api/v1`, header `Authorization: Bearer ok_live_…
 | `POST /games/{id}/publish` | SUBMIT for review → `{ game, link, submitted: true }`; 400 with the reason when a precondition fails, 409 when it can't be submitted now |
 | `POST /games/{id}/unpublish` · `POST /games/{id}/sandbox` | → `{ game }` · `{ url }` |
 
-Errors: `{ "error": { "code", "message" } }` with the matching HTTP status (400 refused body / precondition, 401 bad key, 403 wrong key type, 404 not in this org, 429 rate limit or live-game ceiling).
+Errors: `{ "error": { "code", "message" } }` with the matching HTTP status (400 refused body / precondition, 401 bad key, 403 wrong key type, 404 not in this studio, 429 rate limit or live-game ceiling).
 
 ## Getting a key for an agent
 
