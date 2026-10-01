@@ -41,7 +41,7 @@ Exit codes: 0 ok, 1 refused/failed (message on stderr, or `{"error"}` with `--js
 
 ## The API (what the CLI calls)
 
-Base `https://okonaonline.com/api/v1`, header `Authorization: Bearer ok_live_…` (a **publish** key — analytics keys are refused with a 403 that says so), JSON bodies, 60 requests/minute per key. A key acts for its organization; a game outside it is a 404.
+Base `https://okonaonline.com/api/v1`, header `Authorization: Bearer ok_live_…` (a publish key, from Account → API Keys or `okona login`), JSON bodies, 60 requests/minute per key. A key acts for its organization; a game outside it is a 404.
 
 | Method & path | Body → result |
 |---|---|
@@ -59,7 +59,7 @@ Errors: `{ "error": { "code", "message" } }` with the matching HTTP status (400 
 
 ## Getting a key for an agent
 
-1. The person runs `npx okona-cli login` where the agent runs and approves the code at the printed URL — needs a browser signed in as the organization owner. Tell them this is coming and wait.
+1. The person runs `npx okona-cli login` where the agent runs and approves the code at the printed URL — needs a browser signed in to the developer portal. Tell them this is coming and wait.
 2. Or the person creates a **publish key** under *Account → API Keys* in the portal and gives it to the agent as `OKONA_API_KEY` (or `npx okona-cli login --key …`).
 
 Never paste a key into the game, a commit, or the chat. Keys can be revoked in the portal at any time.
