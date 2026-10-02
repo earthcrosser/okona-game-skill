@@ -56,7 +56,7 @@ The URL is reissued periodically; a code drawn once and never redrawn goes stale
 - `Okona.rumble(padOrIndex, low, high)` — dual-motor magnitudes 0..1 (~200 ms); takes a seat index or the pad object, so no extra `pads()` call is needed. Phones do not vibrate through the relay; gamepads that support it do.
 - `Okona.track(name, props)` — a custom analytics event while the game is played in Okona (name ≤ 64 chars, props JSON ≤ 1 KB, ≤ 500 per page load); appears on the developer's Analytics tab as `customEvents`. Returns `false` standalone.
 - `Okona.mode` — `'live'` | `'sandbox'` | `'standalone'` after `ready` (`'hosted'` before it, inside a frame); `Okona.isHosted` — `true` inside Okona.
-- `Okona.watermark` — whether Okona draws a mark over the game; inside the Okona app it is always `false` (kept for older games).
+- `Okona.watermark` — `true` only in the sandbox (Okona labels the screen "Okona Sandbox"); in the Okona app it is always `false` and nothing is drawn over the game.
 - `Okona.buildUrl` — the build's base URL inside Okona.
 - `Okona.snapshot` — the raw 106-byte input snapshot (the same bytes the Unity SDK reads), for engines that want bytes.
 

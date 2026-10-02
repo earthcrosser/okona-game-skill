@@ -12,7 +12,7 @@ npx okona-cli create --title "Bumper Party" --description "Six cars, one arena."
 npx okona-cli controller <id> <basic|full|xl>       # the phone pad's layout — the game picks, the phone shows exactly that; no republish
 npx okona-cli check <dir>                 # build shape, size caps, SDK tag, dialogs
 npx okona-cli push <dir> --game <id> [--icon icon.png] [--screenshots <dir|a.png,b.png>] [--sandbox] [--publish]
-npx okona-cli update <id> [--title T] [--description D] [--genre G] [--keywords "a, b"] [--youtube URL] [--icon icon.png] [--screenshots …] [--clear-screenshots] [--publish]
+npx okona-cli update <id> [--title T] [--description D] [--genre G] [--keywords "a, b"] [--youtube URL] [--players 2-6] [--play-time under-5|5-15|15-30|30-plus] [--icon icon.png] [--screenshots …] [--clear-screenshots] [--publish]
 npx okona-cli game <id>                   # the full record: status (+ the reason if changes are requested), fields, icon, screenshots, build
 npx okona-cli publish <id> · npx okona-cli unpublish <id> · npx okona-cli sandbox <id> · npx okona-cli link <id>   # submit for review · remove from the catalog · sandbox · its app page
 ```
