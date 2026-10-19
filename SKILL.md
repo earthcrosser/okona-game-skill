@@ -36,7 +36,7 @@ var pads = Okona.pads();                   // six pads, call ONCE per frame and 
 var p = pads[0];
 p.connected; p.parked; p.kind;             // seat taken · controller away (seat held) · 'phone'|'gamepad'|'keyboard'
 p.axes.lx; p.axes.ly;                      // −1..1, +Y is DOWN (Gamepad API convention)
-p.buttons.a; p.justPressed('a');           // a b x y lb rb lt rt select start l3 r3 up down left right home (start + home are Okona's: never read them)
+p.buttons.a; p.justPressed('a');           // a b x y lb rb lt rt select start l3 r3 up down left right home (start + home are Okona's: start always reads false since 1.4.0)
 p.triggers.lt; p.triggers.rt;              // 0..1
 
 Okona.on('join' | 'leave' | 'park' | 'resume', function (pad) {});   // join = a controller CONNECTED; it becomes a player when it presses A

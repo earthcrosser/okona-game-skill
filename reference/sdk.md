@@ -22,7 +22,7 @@
 
 `Okona.pad(i)` → one pad (it refreshes all six, so it counts as your once-per-frame call — don't mix it with `pads()` in the same frame). `Okona.MAX_PLAYERS === 6`. `Okona.BUTTONS` = the 17 names in bit order.
 
-The phone pad shows the layout the game picked on its Controller tab (see Hosting facts): **Basic** = d-pad, A/B/X/Y, Select/Start; **Full** adds both sticks, triggers and shoulders; **XL** = an oversized d-pad and A/B only. A game that reads sticks or triggers must pick Full — on Basic those controls don't exist on the phone. Start (`start`) and Home (`home`) belong to Okona: in the Okona app Start opens the Okona menu and Home goes to the TV's home screen, and neither reaches the game; in the sandbox they bring up Okona's join code; only standalone do they arrive like any other button, so never build on them. Select (`select`) is the game's own: its menu (options, how to play, scores), never pause.
+The phone pad shows the layout the game picked on its Controller tab (see Hosting facts): **Basic** = d-pad, A/B/X/Y, Select/Start; **Full** adds both sticks, triggers and shoulders; **XL** = an oversized d-pad and A/B only. A game that reads sticks or triggers must pick Full — on Basic those controls don't exist on the phone. Start (`start`) and Home (`home`) belong to Okona: in the Okona app Start opens the Okona menu and Home goes to the TV's home screen, and neither reaches the game; in the sandbox they bring up Okona's join code. Since SDK 1.4.0 `start` always reads false, everywhere (`buttons.start`, `pressed`, `justPressed`; one console warning; it will be removed from the list); `home` arrives only standalone. Never build on them. Select (`select`) is the game's own: its menu (options, how to play, scores), never pause.
 
 ## Events
 
