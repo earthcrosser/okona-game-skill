@@ -14,7 +14,7 @@
 | `connected` | bool | A controller holds this seat. |
 | `kind` | `'phone'` \| `'gamepad'` \| `'keyboard'` \| `null` | Informational; input is identical. |
 | `parked` | bool | Controller gone (phone page closed, pad asleep), seat held. Pause/fade the player. |
-| `buttons` | object of bools | `a b x y lb rb lt rt select start l3 r3 up down left right home` |
+| `buttons` | object of bools | `a b x y lb rb lt rt select l3 r3 up down left right` (no `start` or `home`: Okona's, SDK 1.5.0) |
 | `pressed(name)` / `justPressed(name)` | fn | Held now / went down since the last `pads()` call |
 | `axes` | `{lx, ly, rx, ry}` −1..1 | **+Y is down** (screen space, Gamepad API convention) |
 | `triggers` | `{lt, rt}` 0..1 | Analog triggers |
@@ -62,7 +62,7 @@ The URL is reissued periodically; a code drawn once and never redrawn goes stale
 
 ## Standalone fallback (local dev)
 
-Not inside Okona: keyboard = P1 on the first mapped key (WASD/IJKL sticks, arrows d-pad, Space A, LShift B, F X, R Y, Q/E bumpers, Z/X triggers, Tab/Enter select/start, C/V L3/R3); standard-mapping USB/Bluetooth gamepads take the next seats; `pairing.available` is `false`; `drawQr` paints the placeholder. Blur/hidden releases held keys.
+Not inside Okona: keyboard = P1 on the first mapped key (WASD/IJKL sticks, arrows d-pad, Space A, LShift B, F X, R Y, Q/E bumpers, Z/X triggers, Tab select, C/V L3/R3); standard-mapping USB/Bluetooth gamepads take the next seats; `pairing.available` is `false`; `drawQr` paints the placeholder. Blur/hidden releases held keys.
 
 ## Hosting facts that shape a game
 
