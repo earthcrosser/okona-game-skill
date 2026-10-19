@@ -1,10 +1,14 @@
 <!DOCTYPE html>
 <!--
   Okona HTML5 example: "Bumper Party" — a one-file canvas game that shows the
-  whole SDK contract. Six phones scan the code on screen, each becomes a
-  bumper car; sticks drive, A boosts, B honks (rumble). Parked players fade
-  out and come back to the same car. Open the file in a browser and the
-  keyboard is P1 (WASD + Space); on Okona the same code gets phones.
+  whole SDK contract and the Okona game standards (docs.html#standards). Up to
+  six phones or gamepads; each controller becomes a bumper car when it presses
+  A (drop-in, any time). Sticks drive, A boosts, B honks (rumble). Parked
+  players fade out, can't be bumped, and come back to the same car and score.
+  The game freezes while the Okona menu is open, and it draws no join code:
+  Okona shows it, in the Okona app and in the sandbox. Open the file in a
+  browser and the keyboard is P1 (WASD + Space); on Okona the same code gets
+  phones.
 
   Upload this folder as an HTML5 game (Build tab → HTML5) and submit it for review.
 -->
@@ -26,8 +30,6 @@
   'use strict';
   var canvas = document.getElementById('game');
   var ctx = canvas.getContext('2d');
-  var qrCanvas = document.createElement('canvas');
-  qrCanvas.width = qrCanvas.height = 512;
 
   var COLORS = ['#E8A525', '#4FC3F7', '#81C784', '#F06292', '#BA68C8', '#FF8A65'];
   var EMOJI = ['🚗', '🚙', '🏎️', '🚕', '🚓', '🚑'];
@@ -36,7 +38,7 @@
   var W = 1920, H = 1080;             // logical size; scaled to the screen
   var cars = [];
   for (var i = 0; i < 6; i++) {
-    cars.push({ x: 300 + i * 260, y: 540, vx: 0, vy: 0, angle: 0, boost: 0, honk: 0, score: 0 });
+    cars.push({ x: 300 + i * 260, y: 540, vx: 0, vy: 0, angle: 0, boost: 0, honk: 0, score: 0, joined: false });
   }
 
   function resize() {
@@ -47,17 +49,27 @@
   window.addEventListener('resize', resize);
   resize();
 
-  // Give each phone its car on join; fade on park, greet on resume.
-  Okona.on('join', function (pad) {
+  // A connected controller becomes a player (gets its car) when it presses A.
+  function joinCar(pad) {
+    var c = cars[pad.index];
+    c.joined = true; c.score = 0; c.boost = 1;
     Okona.players.setIdentity(pad, { name: NAMES[pad.index], icon: EMOJI[pad.index], accent: COLORS[pad.index] });
-    cars[pad.index].boost = 1;
+  }
+  // 'leave' = the seat went to another controller: that car is gone.
+  Okona.on('leave', function (pad) {
+    cars[pad.index].joined = false;
+    Okona.players.clearIdentity(pad);
   });
-  Okona.on('pairing', function () { Okona.drawQr(qrCanvas); });
 
   function step(dt) {
     var pads = Okona.pads();
+    if (Okona.menuOpen) return pads;  // the Okona menu is open: freeze everything
     for (var i = 0; i < 6; i++) {
       var p = pads[i], c = cars[i];
+      if (!c.joined) {
+        if (p.connected && !p.parked && p.justPressed('a')) joinCar(p);
+        continue;
+      }
       if (!p.connected || p.parked) { c.vx *= 0.9; c.vy *= 0.9; continue; }
       var accel = p.justPressed('a') ? 1400 : 700;
       if (p.justPressed('a')) c.boost = 1;
@@ -74,9 +86,9 @@
       c.boost = Math.max(0, c.boost - dt * 2);
       c.honk = Math.max(0, c.honk - dt * 3);
     }
-    // Bumps: the faster car scores.
+    // Bumps: the faster car scores. A parked (away) car can't be bumped.
     for (var a = 0; a < 6; a++) for (var b = a + 1; b < 6; b++) {
-      if (!pads[a].connected || !pads[b].connected) continue;
+      if (!here(pads, a) || !here(pads, b)) continue;
       var A = cars[a], B = cars[b];
       var dx = B.x - A.x, dy = B.y - A.y, d = Math.sqrt(dx * dx + dy * dy);
       if (d < 100 && d > 0) {
@@ -92,6 +104,8 @@
     return pads;
   }
 
+  function here(pads, i) { return cars[i].joined && pads[i].connected && !pads[i].parked; }
+
   function draw(pads) {
     var sx = canvas.width / W, sy = canvas.height / H;
     ctx.setTransform(sx, 0, 0, sy, 0, 0);
@@ -102,25 +116,6 @@
     ctx.lineWidth = 6;
     ctx.strokeRect(30, 30, W - 60, H - 60);
 
-    var connected = 0;
-    for (var i = 0; i < 6; i++) if (pads[i].connected) connected++;
-
-    // Join panel (until the room is full)
-    if (connected < 6) {
-      var size = connected === 0 ? 440 : 220;
-      var px = W - size - 70, py = 70;
-      ctx.fillStyle = '#FFFFFF';
-      ctx.fillRect(px - 16, py - 16, size + 32, size + 32);
-      ctx.drawImage(qrCanvas, px, py, size, size);
-      ctx.fillStyle = '#FFFFFF';
-      ctx.font = 'bold ' + (connected === 0 ? 44 : 26) + 'px system-ui, sans-serif';
-      ctx.textAlign = 'center';
-      ctx.fillText('Scan to join', px + size / 2, py + size + 70);
-      ctx.fillStyle = '#A0B4C8';
-      ctx.font = (connected === 0 ? 24 : 18) + 'px system-ui, sans-serif';
-      ctx.fillText(Okona.pairing.caption || (Okona.mode === 'standalone' ? 'Keyboard: WASD + Space' : ''), px + size / 2, py + size + 105);
-    }
-
     // Title + scores
     ctx.textAlign = 'left';
     ctx.fillStyle = '#E8A525';
@@ -129,15 +124,17 @@
     ctx.font = '28px system-ui, sans-serif';
     for (var s = 0; s < 6; s++) {
       var p = pads[s];
-      ctx.fillStyle = p.connected ? COLORS[s] : '#3A5578';
-      var label = 'P' + (s + 1) + '  ' + (p.connected ? NAMES[s] + '  ' + cars[s].score + (p.parked ? '  (away)' : '') : 'open');
+      var car0 = cars[s];
+      ctx.fillStyle = car0.joined ? COLORS[s] : (p.connected ? '#A0B4C8' : '#3A5578');
+      var label = 'P' + (s + 1) + '  ' + (car0.joined ? NAMES[s] + '  ' + car0.score + (p.parked ? '  (away)' : '')
+        : p.connected ? 'press A to join' : 'open');
       ctx.fillText(label, 70, 180 + s * 40);
     }
 
     // Cars
     for (var c = 0; c < 6; c++) {
       var pad = pads[c], car = cars[c];
-      if (!pad.connected) continue;
+      if (!car.joined) continue;
       ctx.save();
       ctx.translate(car.x, car.y);
       ctx.rotate(car.angle);
@@ -171,7 +168,6 @@
     requestAnimationFrame(frame);
   }
   Okona.ready(function () {
-    Okona.drawQr(qrCanvas);
     requestAnimationFrame(frame);
   });
 })();

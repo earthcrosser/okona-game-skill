@@ -22,26 +22,26 @@
 
 `Okona.pad(i)` → one pad (it refreshes all six, so it counts as your once-per-frame call — don't mix it with `pads()` in the same frame). `Okona.MAX_PLAYERS === 6`. `Okona.BUTTONS` = the 17 names in bit order.
 
-The phone pad shows the layout the game picked on its Controller tab (see Hosting facts): **Basic** = d-pad, A/B/X/Y, Select/Start; **Full** adds both sticks, triggers and shoulders; **XL** = an oversized d-pad and A/B only. A game that reads sticks or triggers must pick Full — on Basic those controls don't exist on the phone. Home (`home`) belongs to Okona: in the Okona app it opens the Okona menu and never reaches the game; only standalone and in the sandbox does it arrive like any other button.
+The phone pad shows the layout the game picked on its Controller tab (see Hosting facts): **Basic** = d-pad, A/B/X/Y, Select/Start; **Full** adds both sticks, triggers and shoulders; **XL** = an oversized d-pad and A/B only. A game that reads sticks or triggers must pick Full — on Basic those controls don't exist on the phone. Start (`start`) and Home (`home`) belong to Okona: in the Okona app Start opens the Okona menu and Home goes to the TV's home screen, and neither reaches the game; in the sandbox they bring up Okona's join code; only standalone do they arrive like any other button, so never build on them. Select (`select`) is the game's own: its menu (options, how to play, scores), never pause.
 
 ## Events
 
 `Okona.on(name, fn)` / `Okona.off(name, fn)`; the pad object is the argument for seat events.
 
 - `ready` — the SDK knows where it runs; `Okona.mode` is `'live'` (the Okona app), `'sandbox'` or `'standalone'` (until `ready` fires it reads `'hosted'` inside a frame — branch on it only after `ready`). `Okona.ready(fn)` runs immediately if already ready. Start the frame loop here.
-- `join` — a seat was taken (first connection of a controller). Set identity here.
+- `join` — a seat was taken (first connection of a controller). The controller is *connected*, not yet a player: it becomes one when it presses A, and that is when to set its identity.
 - `leave` — permanently freed (rare: eviction when all six seats are wanted).
 - `park` / `resume` — the controller went away / the same one came back to the same seat.
 - `pairing` — the join code changed **or its image just became drawable**. Redraw on every one.
-- `menu` — the Okona menu opened (`true`) or closed (`false`) over the game in the Okona app, on Home or by itself while no controller is connected; `Okona.menuOpen` holds the state. Every pad already reads neutral while it's open; pause on it if you like.
+- `menu` — the Okona menu opened (`true`) or closed (`false`) over the game in the Okona app, on Start (the TV remote's Back) or by itself while no controller is connected; `Okona.menuOpen` holds the state. Every pad already reads neutral while it's open; a real-time game freezes its timers, physics and spawns until it closes (no pause screen of its own).
 
 ## Pairing (the join code)
 
-In the Okona app players usually join before the game loads: the app shows the code on its own screens, and over a running game the Okona menu shows it (on Home, and by itself whenever nobody is connected; it closes when someone joins). The game's own code is optional: it lets people join mid-game without the menu covering the game, and it is the only way a phone joins in the sandbox.
+In the Okona app players usually join before the game loads: the app shows the code on its own screens, and over a running game the Okona menu's Controllers shows it (Start opens the menu), and a game started with nobody connected gets the code over it until a player starts. The sandbox does the same (its code is up while nobody is connected; Start brings it back, and the game gets `menu` while it's up). So a game draws no code of its own, anywhere. The pairing API below remains only for games built before the standards; don't use it in a new game.
 
 `Okona.pairing` — `available` (bool), `url`, `caption` (a short line such as "Uses your phone's internet" — print it under the code), `version` (bumps on change), `qrPng` (PNG bytes), `qrUrl` (a `blob:` URL for an `<img>`), `qrImage` (decoded image once loaded). `Okona.pairing.onChange(fn)` = `on('pairing', fn)`.
 
-`Okona.drawQr(canvas, opts?)` → paints the code into the canvas, square, centred, white ground; returns `true` when a real code was drawn, `false` for the placeholder ("Preparing join code…" inside Okona, "Scan to join / phones join when hosted on Okona" standalone). Options: `{ margin, background, placeholderColor }`. Safe to call every frame (draws from the decoded image, never fetches). Show it large while the room is empty, small once people are in, hidden at six.
+`Okona.drawQr(canvas, opts?)` → paints the code into the canvas, square, centred, white ground; returns `true` when a real code was drawn, `false` for the placeholder ("Preparing join code…" inside Okona, "Scan to join / phones join when hosted on Okona" standalone). Options: `{ margin, background, placeholderColor }`. Safe to call every frame (draws from the decoded image, never fetches).
 
 The URL is reissued periodically; a code drawn once and never redrawn goes stale. Redraw on `pairing`.
 
@@ -66,7 +66,7 @@ Not inside Okona: keyboard = P1 on the first mapped key (WASD/IJKL sticks, arrow
 
 ## Hosting facts that shape a game
 
-- Games play only inside the Okona app (there are no public game links), full screen, with no Okona UI over the game except the Okona menu, which Home opens and which opens by itself while no controller is connected (every pad reads neutral while it's open; the `menu` event lets a game pause).
+- Games play only inside the Okona app (there are no public game links), full screen, with no Okona UI over the game except the Okona menu, which Start opens (the TV remote: Back) and which opens by itself while no controller is connected (every pad reads neutral while it's open; a real-time game freezes on the `menu` event).
 - Every game is reviewed before it goes into the catalog: submitting freezes the build; Okona approves it or sends it back with a reason.
 - Controller tab (per game, no review needed): the game PICKS its phone-pad layout and the phone shows exactly that — players can't switch. Basic (d-pad, A/B/X/Y, Select/Start — what a game gets until it picks), Full (adds both sticks + triggers + shoulders — pick it if the game reads sticks or triggers) or XL (oversized d-pad + A/B, first-time players). Set it from the CLI: `okona controller <id> full`.
 - Builds: a folder with `index.html` at its root, ≤ 50 MB, ≤ 500 files, no dotfiles. Text assets are gzipped by the host. Assets are referenced relatively, exactly as on disk.
