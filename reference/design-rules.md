@@ -4,10 +4,11 @@ Okona games are played on a screen nobody touches — a TV, a projector, a bar's
 
 ## Input
 
-- **One stick, A/B/X/Y, bumpers, a d-pad.** That is the phone pad. The right stick and triggers exist on real gamepads (and on the phone's Full layout); treat them as optional extras. Start and Home belong to Okona: in the Okona app Start opens the Okona menu and Home goes to the TV's home screen, and neither reaches the game. Begin on A ("press A to play"), never "Press Start", never draw a Start glyph, and never build a pause menu. **Select is the game's**: its own menu (options, how to play, scores) or a per-player toggle, never pause.
+- **A d-pad, A/B/X/Y and Select.** That is the phone pad on the Basic layout. The sticks, bumpers and triggers exist on real gamepads and on the phone's Full layout; a game that reads them picks Full on its Controller tab. Start and Home belong to Okona: in the Okona app Start opens the Okona menu and Home goes to the TV's home screen, and neither reaches the game. Begin on A ("press A to play"), never "Press Start", never draw a Start glyph, and never build a pause menu. **Select is the game's**: its own menu (options, how to play, scores) or a per-player toggle, never pause.
 - **No mouse, no keyboard, no touch on the game.** The keyboard fallback is for the developer's local testing only. Never show "press any key" or "click to start" — say "press A".
 - **Buttons, not gestures.** A phone pad has no swipe/tilt. Menus move with the d-pad or stick and confirm with A, back with B. Show buttons by position (a diamond of four with the one to press lit), not by letter: brands put different letters in the same place. Keep the words "Start" and "Select" for those buttons ("Choose", not "P1 select").
 - **Analog is coarse on a phone.** Thumbs on glass are less precise than a real stick; add a dead zone (~0.15) and forgiving hitboxes.
+- **Racing and driving games.** An analog throttle needs the Full layout on phones (Basic has no triggers); read the amount from `triggers`, never `buttons.rt`. A Basic-pad game that wants feathering ramps a held button itself.
 
 ## Players
 

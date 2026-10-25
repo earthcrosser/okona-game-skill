@@ -20,9 +20,11 @@
 | `triggers` | `{lt, rt}` 0..1 | Analog triggers |
 | `mask` | uint32 | Raw button bits (standard Gamepad indices) |
 
-`Okona.pad(i)` → one pad (it refreshes all six, so it counts as your once-per-frame call — don't mix it with `pads()` in the same frame). `Okona.MAX_PLAYERS === 6`. `Okona.BUTTONS` = the 17 names in bit order.
+**Analog triggers: read `triggers`, not `buttons.lt` / `buttons.rt`.** The button bits go true at a light pull (on a phone, past 5%; on a gamepad, at the browser's own press point). Code like `Math.max(triggers.rt, buttons.rt ? 1 : 0)` therefore turns any pull into a full press and silently loses the analog range. `triggers` already covers every input, the keyboard included, so use it alone for gas, brake or any other amount. Use the bits only for on/off actions.
 
-The phone pad shows the layout the game picked on its Controller tab (see Hosting facts): **Basic** = d-pad, A/B/X/Y, Select/Start; **Full** adds both sticks, triggers and shoulders; **XL** = an oversized d-pad and A/B only. A game that reads sticks or triggers must pick Full — on Basic those controls don't exist on the phone. Start (`start`) and Home (`home`) belong to Okona: in the Okona app Start opens the Okona menu and Home goes to the TV's home screen, and neither reaches the game; in the sandbox they bring up Okona's join code. Since SDK 1.4.0 `start` always reads false, everywhere (`buttons.start`, `pressed`, `justPressed`; one console warning; it will be removed from the list); `home` arrives only standalone. Never build on them. Select (`select`) is the game's own: its menu (options, how to play, scores), never pause.
+`Okona.pad(i)` → one pad (it refreshes all six, so it counts as your once-per-frame call — don't mix it with `pads()` in the same frame). `Okona.MAX_PLAYERS === 6`. `Okona.BUTTONS` = the 17 names in bit order (bits 9 and 16, Start and Home, are `null`).
+
+The phone pad shows the layout the game picked on its Controller tab (see Hosting facts): **Basic** = d-pad, A/B/X/Y, Select/Start; **Full** adds both sticks, triggers and shoulders; **XL** = an oversized d-pad and A/B only. A game that reads sticks or triggers must pick Full — on Basic those controls don't exist on the phone. Start (`start`) and Home (`home`) belong to Okona: in the Okona app Start opens the Okona menu and Home goes to the TV's home screen, and neither reaches the game; in the sandbox they bring up Okona's join code. Since SDK 1.5.0 a pad has no `start` or `home` button at all, in any mode, and their bits never appear in `mask`. Never build on them. Select (`select`) is the game's own: its menu (options, how to play, scores), never pause.
 
 ## Events
 
