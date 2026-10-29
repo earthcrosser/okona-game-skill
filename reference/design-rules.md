@@ -45,6 +45,7 @@ These are the **Okona game standards** (https://okonaonline.com/developers/docs.
 - Assets referenced relatively, exactly as on disk. Case-sensitive on the host.
 - No persistent storage: the game runs in an isolated origin, so `localStorage`/IndexedDB/cookies throw. Wrap any use in `try`/`catch`; a round-based party game shouldn't need saves anyway.
 - Prefer ES2015 syntax in the shipped bundle and avoid CSS `inset` / flex `gap` — older TV browsers and webviews.
+- **Fast on a Google TV streamer, not just your machine.** The low end Okona measures against (the onn 4K Plus: four Cortex-A55 cores, 2 GB) runs out of CPU before GPU. Keep per-frame work flat (pool objects, update only what changed). Hundreds of Canvas 2D calls a frame (clips, gradients, paths) saturate its GPU thread: for a busy scene use a WebGL renderer that batches sprites (Phaser, PixiJS), or draw static layers to an offscreen canvas once. A 1080p TV's webview is 960×540 CSS px at 2×, so a canvas sized by `devicePixelRatio` draws 4× the pixels; a heavy game sizes it to the CSS pixels.
 - An icon (png/jpg/webp/gif, ≤ 2 MB) for the portal.
 
 ## Pre-submit checklist
