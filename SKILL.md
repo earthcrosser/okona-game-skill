@@ -1,11 +1,11 @@
 ---
 name: okona-game
-description: Build a phone-controlled multiplayer HTML5 game and submit it to the Okona catalog. Up to six players scan a code on the screen and their phones become gamepads; Okona reviews the game and plays it in the Okona app. Use when the user wants a party game, a couch/TV/bar game, a game friends can play with their phones, or asks to put a game on Okona.
+description: Build a phone-controlled HTML5 game (one player or up to six) and submit it to the Okona catalog. Players scan a code on the screen and their phones become gamepads; Okona reviews the game and plays it in the Okona app. Use when the user wants a TV or couch game (solo or multiplayer), a party or bar game, a game friends can play with their phones, or asks to put a game on Okona.
 ---
 
 # Okona game
 
-Okona (https://okonaonline.com) is a curated catalog of phone-controlled multiplayer games. You write an ordinary canvas/JS game that reads six pads from one script; Okona handles the phones, the pairing code and hosting, and reviews every game before it goes into the catalog. There are no public game links: games play inside Okona. This skill is the whole contract plus the workflow that ships a working game on the first try.
+Okona (https://okonaonline.com) is a curated catalog of phone-controlled games, for one player or up to six. You write an ordinary canvas/JS game that reads six pads from one script; Okona handles the phones, the pairing code and hosting, and reviews every game before it goes into the catalog. There are no public game links: games play inside Okona. This skill is the whole contract plus the workflow that ships a working game on the first try.
 
 ## Workflow
 

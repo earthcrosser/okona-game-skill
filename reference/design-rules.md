@@ -22,7 +22,7 @@ These are the **Okona game standards** (https://okonaonline.com/developers/docs.
 - **Away is not gone.** A `parked` player has put their phone down or their screen turned off; their seat is held and they come back as the same player. Keep their character, spot and score until the round ends; freeze/fade them (or let a CPU take over) and make them unhittable; never stall the round for them, never respawn them as new. When everyone is away, draw no "waiting for players" screen: Okona opens its menu by itself.
 - **Freeze on the Okona menu.** While `Okona.menuOpen` is true (the `menu` event) a real-time game stops its timers, physics and spawns. Pads already read neutral and the menu covers the screen: no pause screen of the game's own.
 - **Identity on the phone.** When a controller becomes a player (its first A), set a name, an emoji or image, and the player's colour, so each person can look at their own hand and know which car/blob/paddle is theirs.
-- **The party facts match the game.** `playersMin`/`playersMax` are what the game actually allows.
+- **The player counts match the game.** `playersMin`/`playersMax` are what the game actually allows. A one-player game (`1`–`1`) is welcome; the controller that presses A plays.
 - **Pick the pad layout your game uses.** On the game's Controller tab (or `okona controller <id> <basic|full|xl>`), choose Basic, Full or XL — the phone shows exactly that, and players can't switch. A game that reads sticks or triggers needs Full; a two-button game is friendliest on XL.
 
 ## The screen
@@ -34,7 +34,7 @@ These are the **Okona game standards** (https://okonaonline.com/developers/docs.
 
 ## Pace and sessions
 
-- **Rounds, not campaigns.** 30 seconds to 3 minutes, then a results screen and "play again". People drift in and out of a party.
+- **Rounds, not campaigns.** 30 seconds to 3 minutes, then a results screen and "play again". People drift in and out of a shared screen.
 - **Explain by doing.** One line of instruction on the lobby ("Grab the coins. Most coins after 45 seconds wins."), then start. No tutorial screens.
 - **Idle is normal.** The lobby may sit for a long time between rounds; keep it alive and light (no heavy particle systems on the lobby).
 
@@ -43,7 +43,7 @@ These are the **Okona game standards** (https://okonaonline.com/developers/docs.
 - A folder with `index.html` at its root. ≤ 50 MB total, ≤ 500 files, no dotfiles or `node_modules`.
 - **Bundle every library into the folder.** Some networks block CDNs; a game that fetches Phaser from the internet at boot is a game that sometimes doesn't start.
 - Assets referenced relatively, exactly as on disk. Case-sensitive on the host.
-- No persistent storage: the game runs in an isolated origin, so `localStorage`/IndexedDB/cookies throw. Wrap any use in `try`/`catch`; a round-based party game shouldn't need saves anyway.
+- No persistent storage: the game runs in an isolated origin, so `localStorage`/IndexedDB/cookies throw. Wrap any use in `try`/`catch`; a game built from short sessions shouldn't need saves anyway.
 - Prefer ES2015 syntax in the shipped bundle and avoid CSS `inset` / flex `gap` — older TV browsers and webviews.
 - **Fast on a Google TV streamer, not just your machine.** The low end Okona measures against (the onn 4K Plus: four Cortex-A55 cores, 2 GB) runs out of CPU before GPU. Keep per-frame work flat (pool objects, update only what changed). Hundreds of Canvas 2D calls a frame (clips, gradients, paths) saturate its GPU thread: for a busy scene use a WebGL renderer that batches sprites (Phaser, PixiJS), or draw static layers to an offscreen canvas once. A 1080p TV's webview is 960×540 CSS px at 2×, so a canvas sized by `devicePixelRatio` draws 4× the pixels; a heavy game sizes it to the CSS pixels.
 - An icon (png/jpg/webp/gif, ≤ 2 MB) for the portal.
