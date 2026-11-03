@@ -44,6 +44,7 @@ Okona.on('menu', function (open) {});      // the Okona menu opened/closed over 
 Okona.players.setIdentity(pad, { name: 'Gold', icon: '🚗', accent: '#E8A525' });  // on the phone's pill
 Okona.rumble(pad, low, high);  Okona.track('round_end', { winner: 1 });
 Okona.mode;                                // 'live' (the Okona app) | 'sandbox' | 'standalone' (opened outside Okona)
+Okona.save.get('best', 0); Okona.save.set('best', 12);   // the player's save, kept by Okona per account (SDK 1.6.0); read after ready
 ```
 
 Rules that follow from the runtime, the **Okona game standards** (every catalog game follows them; Okona checks them in review; full text: https://okonaonline.com/developers/docs.html#standards):
@@ -53,6 +54,7 @@ Rules that follow from the runtime, the **Okona game standards** (every catalog 
 - **One join style, named in the description:** lobby (A joins, B leaves), drop-in (A joins any time) or between rounds (A mid-round queues for the next). **Any joined player** starts or replays with A; never "P1 only" (seat 1 may be empty).
 - **Away is not gone.** A player whose phone screen turned off is `parked`: keep their character, spot and score until the round ends; freeze/fade them (or a CPU takes over) and make them unhittable; the round never waits. They return to the same seat (`resume`) as the same player. When everyone is away, draw no "waiting for players" screen: Okona opens its menu by itself.
 - **Freeze on the Okona menu.** While `Okona.menuOpen` a real-time game stops its timers, physics and spawns; no pause screen of its own.
+- **Saves: `Okona.save`, never browser storage.** Okona keeps one save per player account per game (≤ 256 KB, ≤ 200 keys); high scores are keys in it (there are no shared leaderboards). Read it after `ready`, never write defaults before then, and make the game play from a fresh start and when `Okona.save.status` is `'unavailable'` (standard 11).
 - **`navigator.getGamepads()` is empty inside Okona** on purpose. Read `Okona.pads()` only.
 - **Bundle libraries** into the folder rather than loading them from a CDN; a network that blocks one can break the game.
 - Complete SDK reference: `reference/sdk.md`. This skill is published at https://github.com/earthcrosser/okona-game-skill. Live docs, always current, over MCP: `https://okonaonline.com/mcp` (tools `list_doc_sections`, `read_doc_section`, `search_docs`).

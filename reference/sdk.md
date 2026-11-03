@@ -62,6 +62,16 @@ The URL is reissued periodically; a code drawn once and never redrawn goes stale
 - `Okona.buildUrl` — the build's base URL inside Okona.
 - `Okona.snapshot` — the raw 106-byte input snapshot (the same bytes the Unity SDK reads), for engines that want bytes.
 
+## Saves (SDK 1.6.0)
+
+Okona keeps one save per player account per game; it follows the player to any screen. It is in memory by `ready`, so reads are synchronous; Okona writes the changes every few seconds, when the player leaves and when the screen closes.
+
+- `Okona.save.get(key, fallback)` — a JSON copy of the value, or `fallback`. `Okona.save.set(key, value)` — any JSON value; `false` for a bad key (letters, digits, `_ . -`, ≤ 64), a non-JSON value, over 256 KB or 200 keys, or before `ready`. `remove(key)`, `clear()`, `has(key)`, `keys()`, `bytes()`.
+- `Okona.save.flush()` — ask Okona to write now (after a finished level); a Promise. Don't `set` every frame.
+- `Okona.save.status` — `'loading'` before `ready`, then `'ready'`; `'unavailable'` (Okona couldn't load it: play on, sets work for the session, nothing is written); `'none'` (no saves here); `'local'` standalone (kept in that browser's `localStorage`, so persistence can be tested).
+- High scores live in the save (a best, a top-ten list); there are no shared leaderboards. Store a `version` key and migrate old data yourself.
+- The game must play from a fresh start and with the save unavailable (Okona game standard 11).
+
 ## Standalone fallback (local dev)
 
 Not inside Okona: keyboard = P1 on the first mapped key (WASD/IJKL sticks, arrows d-pad, Space A, LShift B, F X, R Y, Q/E bumpers, Z/X triggers, Tab select, C/V L3/R3); standard-mapping USB/Bluetooth gamepads take the next seats; `pairing.available` is `false`; `drawQr` paints the placeholder. Blur/hidden releases held keys.
@@ -74,4 +84,4 @@ Not inside Okona: keyboard = P1 on the first mapped key (WASD/IJKL sticks, arrow
 - Builds: a folder with `index.html` at its root, ≤ 50 MB, ≤ 500 files, no dotfiles. Text assets are gzipped by the host. Assets are referenced relatively, exactly as on disk.
 - Old screens: TV browsers and webviews can be pre-2020 Chromium. Prefer ES2015 syntax in shipped code, avoid CSS `inset` and flex `gap`, and never rely on a CDN at runtime.
 - Dialogs (`alert`, `confirm`, `prompt`), popups and top-level navigation are blocked inside the game frame.
-- The game frame is an isolated origin: `localStorage`, `sessionStorage`, IndexedDB and cookies are unavailable (access throws — wrap it in `try`/`catch` and keep running without it), and the game can't reach the page around it — only the SDK talks to Okona. Its own files load normally (relative URLs; `fetch`/XHR work).
+- The game frame is an isolated origin: `localStorage`, `sessionStorage`, IndexedDB and cookies are unavailable (access throws — wrap it in `try`/`catch` and keep running without it; keep progress in `Okona.save` instead), and the game can't reach the page around it — only the SDK talks to Okona. Its own files load normally (relative URLs; `fetch`/XHR work).
