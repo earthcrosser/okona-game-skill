@@ -1,0 +1,8 @@
+{
+  "title": "Slot Racer",
+  "description": "Slot-car racing for one player or up to six. Hold A for gas, press left or right to change lanes, and lift before the corners or you spin out. Five laps; beat your best lap. Press A to join: new players join the next race.",
+  "genre": "racing",
+  "keywords": ["racing", "slot cars", "cars", "local multiplayer"],
+  "controller": "basic",
+  "icon": "icon.png"
+}

@@ -27,7 +27,7 @@ These are the **Okona game standards** (https://okonaonline.com/developers/docs.
 
 ## The screen
 
-- **16:9, 1920×1080 logical, scaled to fit.** Draw to a fixed logical size and scale (the starter does). Keep everything essential inside the middle 90% for TVs that overscan.
+- **16:9, scaled to fit.** Lay out at 1920×1080 logical if that's easier, but draw to a 960×540 canvas (or a smaller fixed size: 640×360 for pixel art) and let it scale to the screen: that is what a 1080p TV's webview shows in CSS pixels, and a bigger canvas costs fill and GPU memory. Keep everything essential inside the middle 90% for TVs that overscan.
 - **Big type, high contrast.** Body text ≥ 28px logical, headlines ≥ 56px, strong colour against a dark ground. It is read from three metres away.
 - **No hover states, no cursor, no tooltips.** Nothing on the screen is pointed at.
 - **Never block.** No `alert()`/`confirm()`/`prompt()` (blocked, and nobody can dismiss a dialog with a gamepad); no popups; no navigation away. An error should render on the canvas.
@@ -43,9 +43,11 @@ These are the **Okona game standards** (https://okonaonline.com/developers/docs.
 - A folder with `index.html` at its root. ≤ 50 MB total, ≤ 500 files, no dotfiles or `node_modules`.
 - **Bundle every library into the folder.** Some networks block CDNs; a game that fetches Phaser from the internet at boot is a game that sometimes doesn't start.
 - Assets referenced relatively, exactly as on disk. Case-sensitive on the host.
-- No persistent storage: the game runs in an isolated origin, so `localStorage`/IndexedDB/cookies throw. Wrap any use in `try`/`catch`; a game built from short sessions shouldn't need saves anyway.
+- No browser storage: the game runs in an isolated origin, so `localStorage`/IndexedDB/cookies throw. Keep progress, unlocks and best scores in `Okona.save` (see `sdk.md`); wrap any other storage use in `try`/`catch`.
 - Prefer ES2015 syntax in the shipped bundle and avoid CSS `inset` / flex `gap` — older TV browsers and webviews.
-- **Fast on a Google TV streamer, not just your machine.** The low end Okona measures against (the onn 4K Plus: four Cortex-A55 cores, 2 GB) runs out of CPU before GPU. Keep per-frame work flat (pool objects, update only what changed). Hundreds of Canvas 2D calls a frame (clips, gradients, paths) saturate its GPU thread: for a busy scene use a WebGL renderer that batches sprites (Phaser, PixiJS), or draw static layers to an offscreen canvas once. A 1080p TV's webview is 960×540 CSS px at 2×, so a canvas sized by `devicePixelRatio` draws 4× the pixels; a heavy game sizes it to the CSS pixels.
+- **Fast on a Google TV streamer, not just your machine.** The low end Okona measures against (the onn 4K Plus: four Cortex-A55 cores, a Mali-G310, 2 GB shared by CPU and GPU, about 600–700 MB free) runs out of CPU before GPU. Keep per-frame work flat (pool objects, update only what changed). Hundreds of Canvas 2D calls a frame (clips, gradients, paths) saturate its GPU thread, so a busy scene needs a WebGL renderer that batches sprites. A canvas sized by `devicePixelRatio` draws 4× the pixels of the 960×540 CSS viewport: size it to the CSS pixels.
+- **GPU memory grows with the canvas, and running out restarts the whole Okona app** (the TV kills the page; every phone has to rejoin). Keep what the game reserves at boot well under 250 MB: a 960×540 canvas, and no engine features you don't use.
+- **Use Phaser 3.90.0 (WebGL): the engine Okona recommends** (https://okonaonline.com/developers/docs.html#phaser). Bundle `phaser.min.js` in the folder. In the game config set `disablePreFX: true, disablePostFX: true` (top-level keys: otherwise Phaser reserves about 520 MB of render targets at boot on a 1920×1080 canvas), `width: 960, height: 540` with `scale: { mode: Phaser.Scale.FIT }`, `render: { antialiasGL: false }`, and turn Phaser's input off (`input: { keyboard: false, mouse: false, touch: false, gamepad: false }`): `Okona.pads()` is the input, read once per frame in the scene's `update`. While `Okona.menuOpen`, pause `this.time`, the tweens and `this.sound` (Phaser resumes a suspended AudioContext by itself). Reset per-round state in `create`, not the constructor (scenes are reused). Make canvas textures with `this.textures.addImage(key, canvas)`, never `addCanvas` (it reads every pixel back). Paint static layers once; draw accumulating marks into a `RenderTexture`; `setText` only when a value changes; a bitmap font or a bundled font (a TV has none of the desktop fonts). Never add `_`-named fields to Phaser objects.
 - An icon (png/jpg/webp/gif, ≤ 2 MB) for the portal.
 
 ## Pre-submit checklist
@@ -59,4 +61,5 @@ These are the **Okona game standards** (https://okonaonline.com/developers/docs.
 - [ ] Results screen with "press A to play again".
 - [ ] Nothing depends on keyboard, mouse or touch on the game.
 - [ ] Type is legible on a TV from a couch.
-- [ ] `npx okona-cli check <dir>` passes; the sandbox run with real phones felt right.
+- [ ] A Phaser game's config sets `disablePreFX` and `disablePostFX`, and its canvas is 960×540 or smaller.
+- [ ] `npx okona-cli check <dir>` passes; the sandbox run with real phones felt right, and ten minutes on a real TV box (several controllers, several rounds) brought no slowdown or restart.

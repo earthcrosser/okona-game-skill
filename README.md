@@ -2,7 +2,7 @@
 
 Build a **phone-controlled HTML5 game for [Okona](https://okonaonline.com)**, for one player or up to six, with your AI coding assistant, and submit it to the Okona catalog. Players scan a code on the screen and their phones become gamepads; Okona reviews every game, and approved games play in the Okona app.
 
-This repository is the skill in the open [Agent Skills](https://agentskills.io) format: `SKILL.md` (the workflow and the SDK contract), `reference/` (the full SDK, TV-and-phone design rules, publishing via the `okona` CLI and API) and a complete example game: `examples/bumper-party/` (a gamepad party game).
+This repository is the skill in the open [Agent Skills](https://agentskills.io) format: `SKILL.md` (the workflow and the SDK contract), `reference/` (the full SDK, TV-and-phone design rules, publishing via the `okona` CLI and API) and a complete example game: `examples/slot-racer/` (the `npm create okona-game` starter: a Phaser 3.90 slot-car racer for one player or up to six, set up for a TV box).
 
 ## Install
 

@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<!--
+  Slot Racer: an Okona game, built on Phaser 3.90 (bundled: phaser.min.js).
+
+  This file is the LOBBY, the seats and the loop; your game lives in game.js.
+  Six phones or gamepads connect through Okona, and each becomes a player by
+  pressing A. It follows the Okona game standards
+  (https://okonaonline.com/developers/docs.html#standards): A joins, any joined
+  player starts, the game freezes while the Okona menu is open, and it draws
+  no join code: Okona shows it, in the Okona app and in the sandbox.
+  The Phaser config is the one Okona recommends for a TV box
+  (https://okonaonline.com/developers/docs.html#phaser): keep it.
+  Open this file in a browser and the keyboard is P1 (arrows/WASD,
+  Space = A, Shift = B) so you can play what you build.
+
+  Submit:  npx okona-cli create && npx okona-cli push . --publish   (okona.json holds the title, icon, screenshots)
+  Docs:    https://okonaonline.com/developers/docs.html#html5
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Slot Racer</title>
+<style>
+  html, body { margin: 0; height: 100%; background: #0D1B2A; overflow: hidden; }
+</style>
+</head>
+<body>
+<!-- The Okona SDK: phones and gamepads, identity, rumble, saves, analytics. -->
+<script src="https://okonaonline.com/sdk/okona.js"></script>
+<script src="phaser.min.js"></script>
+<script src="game.js"></script>
+<script>
+(function () {
+  'use strict';
+  var W = 960, H = 540;                    // the canvas: a 1080p TV's webview is 960x540 CSS px
+
+  // ---- players --------------------------------------------------------------
+  // Six seats. A controller that connects is only CONNECTED; it becomes a
+  // player (joined) when it presses A. Okona holds a seat while its
+  // controller is away (pad.parked), so a player who closes their phone gets
+  // the same seat back when they return.
+  var COLORS = ['#E8A525', '#4FC3F7', '#81C784', '#F06292', '#BA68C8', '#FF8A65'];
+  var players = [];
+  for (var i = 0; i < 6; i++) players.push({ index: i, color: COLORS[i], tint: parseInt(COLORS[i].slice(1), 16), name: 'P' + (i + 1), joined: false });
+
+  var state = 'lobby', elapsed = 0, scene = null, ui = null;
+
+  function joinPlayer(p, pad) {
+    p.joined = true;
+    // What this player sees on their phone: name, emoji or image, accent.
+    Okona.players.setIdentity(pad, { name: p.name, icon: Game.icons[pad.index] || '🎮', accent: p.color });
+    Game.onJoin(p, pad, state === 'playing');
+  }
+  function dropPlayer(p, pad) {
+    if (!p.joined) return;
+    p.joined = false;
+    Okona.players.clearIdentity(pad);
+    Game.onLeave(p, pad);
+  }
+  // 'leave' = the seat went to another controller: that player is gone.
+  Okona.on('leave', function (pad) { dropPlayer(players[pad.index], pad); });
+
+  function count(pads, joinedOnly) {
+    var n = 0;
+    for (var k = 0; k < 6; k++) if (pads[k].connected && (!joinedOnly || players[k].joined)) n++;
+    return n;
+  }
+
+  // ---- screens: Phaser text objects, made once; setText only changes them when the words change
+  function text(x, y, size, color, align) {
+    var t = scene.add.text(x, y, '', { fontFamily: 'system-ui, sans-serif', fontSize: size + 'px', fontStyle: 'bold', color: color });
+    t.setOrigin(align === 'center' ? 0.5 : 0, 0.5);
+    return t;
+  }
+  function buildUi() {
+    ui = { lobby: scene.add.container(0, 0), results: scene.add.container(0, 0), seats: [], seatColors: [], rows: [] };
+    ui.lobby.add(text(48, 70, 44, '#E8A525').setText(Game.title));
+    ui.lobby.add(text(48, 112, 20, '#A0B4C8').setText(Game.subtitle));
+    for (var s = 0; s < 6; s++) { ui.seats.push(text(48, 170 + s * 38, 22, '#2A4A6F')); ui.lobby.add(ui.seats[s]); }
+    ui.prompt = text(48, 430, 22, '#FFFFFF'); ui.lobby.add(ui.prompt);
+    ui.results.add(scene.add.rectangle(W / 2, H / 2, 720, 460, 0x0D1B2A, 0.88));   // over the game, so it reads
+    ui.results.add(text(W / 2, 90, 48, '#E8A525', 'center').setText('Results'));
+    for (var r = 0; r < 6; r++) { ui.rows.push(text(W / 2, 170 + r * 40, 26, '#FFFFFF', 'center')); ui.results.add(ui.rows[r]); }
+    ui.results.add(text(W / 2, 470, 22, '#A0B4C8', 'center').setText('Press A to play again'));
+  }
+  function show(next) {
+    state = next;
+    ui.lobby.setVisible(state === 'lobby');
+    ui.results.setVisible(state === 'results');
+    Game.show(state === 'playing' || state === 'results');
+  }
+  function updateLobby(pads) {
+    for (var s = 0; s < 6; s++) {
+      var p = players[s], pad = pads[s];
+      ui.seats[s].setText(p.joined ? '● ' + p.name + (pad.parked ? '   away' : '   ready')
+        : pad.connected ? '○ ' + p.name + '   press A to join' : '○ ' + p.name);
+      var color = p.joined ? p.color : (pad.connected ? '#A0B4C8' : '#2A4A6F');
+      if (ui.seatColors[s] !== color) { ui.seatColors[s] = color; ui.seats[s].setColor(color); }   // setColor redraws the text: only on a change
+    }
+    var n = count(pads, true);
+    ui.prompt.setText(n === 0 ? (count(pads, false) ? 'Press A to join' : 'Waiting for players…')
+      : 'Press A to start · B to leave' + (Okona.mode === 'standalone' ? '      (keyboard: arrows + Space)' : ''));
+  }
+  function showResults() {
+    var lines = Game.results(players);
+    for (var r = 0; r < 6; r++) {
+      var line = lines[r];
+      ui.rows[r].setText(line ? line.text : '').setColor(line ? line.color : '#FFFFFF');
+    }
+  }
+
+  // ---- the loop: Phaser's scene update, once per frame ------------------------
+  function update(time, delta) {
+    var dt = Math.min(0.05, delta / 1000);
+    var pads = Okona.pads();               // exactly once per frame: a second call (or Okona.pad(i)) resets justPressed()
+    if (Okona.menuOpen) return;            // the Okona menu is over the game: everything freezes
+
+    // A connected controller becomes a player by pressing A. That press only
+    // joins; it never also starts the race.
+    var joinedNow = [];
+    for (var j = 0; j < 6; j++) {
+      if (!players[j].joined && pads[j].connected && !pads[j].parked && pads[j].justPressed('a')) { joinPlayer(players[j], pads[j]); joinedNow[j] = true; }
+    }
+    // Any joined player who is here drives the flow (never "P1 only": seat 1 may be empty).
+    function pressed(button) {
+      for (var k = 0; k < 6; k++) if (!joinedNow[k] && players[k].joined && pads[k].connected && !pads[k].parked && pads[k].justPressed(button)) return true;
+      return false;
+    }
+
+    if (state === 'lobby') {
+      for (var b = 0; b < 6; b++) if (!joinedNow[b] && players[b].joined && pads[b].connected && pads[b].justPressed('b')) dropPlayer(players[b], pads[b]);
+      updateLobby(pads);
+      if (count(pads, true) > 0 && pressed('a')) {
+        Game.start(players, pads);
+        elapsed = 0;
+        show('playing');
+        Okona.track('round_start', { players: count(pads, true) });
+      }
+    } else if (state === 'playing') {
+      elapsed += dt;
+      if (Game.update(dt, players, pads, elapsed)) {
+        Okona.track('round_end', { seconds: Math.round(elapsed) });
+        showResults();                     // everyone who raced, away or not
+        show('results');
+        // The race is over: let go of anyone still away.
+        for (var m = 0; m < 6; m++) if (players[m].joined && (!pads[m].connected || pads[m].parked)) dropPlayer(players[m], pads[m]);
+      }
+    } else if (pressed('a')) {
+      show('lobby');
+    }
+  }
+
+  Okona.ready(function () {
+    new Phaser.Game({
+      type: Phaser.WEBGL,
+      width: W, height: H,
+      backgroundColor: '#0D1B2A',
+      disablePreFX: true,                  // top-level keys: without them Phaser reserves GPU memory
+      disablePostFX: true,                 // for effects at boot (about 90 MB at this size; 35 MB without)
+      banner: false,
+      fps: { target: 60 },
+      input: { keyboard: false, mouse: false, touch: false, gamepad: false },   // Okona.pads() is the input
+      scale: { mode: Phaser.Scale.FIT, autoCenter: Phaser.Scale.CENTER_BOTH },
+      render: { antialiasGL: false, powerPreference: 'high-performance' },
+      scene: {
+        create: function () {
+          scene = this;
+          Game.create(scene, W, H);
+          buildUi();
+          show('lobby');
+          // Freeze anything Phaser runs on its own while the Okona menu is open.
+          Okona.on('menu', function (open) {
+            scene.time.paused = open;
+            if (open) { scene.tweens.pauseAll(); scene.sound.pauseAll(); } else { scene.tweens.resumeAll(); scene.sound.resumeAll(); }
+          });
+        },
+        update: update
+      }
+    });
+  });
+})();
+</script>
+</body>
+</html>
