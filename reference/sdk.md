@@ -1,6 +1,6 @@
 # Okona JavaScript SDK — reference
 
-`<script src="https://okonaonline.com/sdk/okona.js"></script>` defines `window.Okona`. ES2015, no dependencies, ~15 KB. Inside Okona the game runs in a frame and the SDK talks to the host; opened as a plain page it falls back to the keyboard and USB gamepads.
+`<script src="https://okonaonline.com/sdk/okona.js"></script>` defines `window.Okona`. ES2015, no dependencies, ~15 KB. Inside Okona the game runs in a frame and the SDK talks to the host; opened as a plain page, or framed by another site such as itch.io (1.6.1), it falls back to the keyboard and USB gamepads.
 
 ## Pads
 
